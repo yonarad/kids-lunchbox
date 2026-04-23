@@ -256,11 +256,24 @@ function KidsView() {
             {activeItems.map((it) => {
               const isSel = selectedIds.includes(it.id);
               const otherCats = (itemCats[it.id] ?? []).filter((cid) => cid !== activeCat);
+              // Disabled if not selected AND any of its categories has reached max
+              const itemCatIds = itemCats[it.id] ?? [it.category_id];
+              const isDisabled = !isSel && itemCatIds.some((cid) => {
+                const c = cats.find((x) => x.id === cid);
+                return c ? countForCat(cid) >= c.max_selections : false;
+              });
               return (
                 <button
                   key={it.id}
-                  onClick={() => toggleItem(activeCat!, it.id)}
-                  className={`relative rounded-3xl overflow-hidden transition-all ${isSel ? "ring-4 ring-primary scale-95 shadow-pop" : "shadow-card hover:scale-105 active:scale-95"}`}
+                  onClick={() => !isDisabled && toggleItem(activeCat!, it.id)}
+                  disabled={isDisabled}
+                  className={`relative rounded-3xl overflow-hidden transition-all ${
+                    isSel
+                      ? "ring-4 ring-primary scale-95 shadow-pop"
+                      : isDisabled
+                        ? "opacity-40 grayscale cursor-not-allowed shadow-card"
+                        : "shadow-card hover:scale-105 active:scale-95"
+                  }`}
                 >
                   <div className="aspect-square bg-secondary flex items-center justify-center">
                     {it.image_url ? (
