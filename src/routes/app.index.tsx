@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyHouseholdId, todayInIsrael } from "@/lib/household";
+import { getMyHouseholdId, todayInIsrael, getResetHour } from "@/lib/household";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,8 @@ function Dashboard() {
       .eq("household_id", hid)
       .order("created_at");
     setChildren(kids ?? []);
-    const today = todayInIsrael();
+    const resetHour = await getResetHour(hid);
+    const today = todayInIsrael(resetHour);
     const { data: sels } = await supabase
       .from("selections")
       .select("child_id")
