@@ -215,11 +215,11 @@ function Pantry() {
             <div>
               <label className="text-sm font-medium block mb-2">תמונה (אופציונלי)</label>
               <div className="flex items-center gap-3">
-                <div className="w-20 h-20 rounded-xl bg-secondary overflow-hidden flex items-center justify-center">
+                <div className="w-20 h-20 rounded-xl bg-secondary overflow-hidden flex items-center justify-center shrink-0">
                   {itemImage ? <img src={itemImage} alt="" className="w-full h-full object-cover" /> : <span className="text-4xl">{itemEmoji}</span>}
                 </div>
                 <div className="flex-1 space-y-2">
-                  <label className="cursor-pointer">
+                  <label className="cursor-pointer block">
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])} />
                     <div className="border-2 border-dashed rounded-xl p-3 text-center text-sm hover:bg-secondary transition-colors">
                       <ImageIcon className="w-4 h-4 inline ml-1" />
@@ -228,6 +228,15 @@ function Pantry() {
                   </label>
                   {itemImage && <Button size="sm" variant="ghost" onClick={() => setItemImage(null)}>הסרה</Button>}
                 </div>
+              </div>
+              <div className="mt-2">
+                <Input
+                  type="url"
+                  dir="ltr"
+                  placeholder="או הדביקו קישור לתמונה (https://...)"
+                  value={itemImage && itemImage.startsWith("http") && !itemImage.includes("/storage/v1/") ? itemImage : ""}
+                  onChange={(e) => setItemImage(e.target.value || null)}
+                />
               </div>
             </div>
             <div>
