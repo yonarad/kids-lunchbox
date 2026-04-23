@@ -46,7 +46,8 @@ function KidsView() {
       setChildren(kids ?? []);
       setCats(c ?? []);
       setItems(f ?? []);
-      const target = (kids ?? []).find((k) => k.id === search.child) ?? (kids?.[0] ?? null);
+      // Only auto-select a child if one was explicitly chosen via search param
+      const target = search.child ? (kids ?? []).find((k) => k.id === search.child) ?? null : null;
       setChild(target);
       setActiveCat(c?.[0]?.id ?? null);
       // pre-load existing selections for this child
@@ -60,6 +61,9 @@ function KidsView() {
         }
         setSelected(grouped);
         if (my.length > 0) setDone(true);
+      } else {
+        setSelected({});
+        setDone(false);
       }
     })();
   }, [user, search.child]);
