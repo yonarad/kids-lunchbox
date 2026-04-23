@@ -46,7 +46,8 @@ function KidsView() {
       setChildren(kids ?? []);
       setCats(c ?? []);
       setItems(f ?? []);
-      const target = (kids ?? []).find((k) => k.id === search.child) ?? (kids?.[0] ?? null);
+      // Only auto-select a child if one was explicitly chosen via search param
+      const target = search.child ? (kids ?? []).find((k) => k.id === search.child) ?? null : null;
       setChild(target);
       setActiveCat(c?.[0]?.id ?? null);
       // pre-load existing selections for this child
@@ -60,6 +61,9 @@ function KidsView() {
         }
         setSelected(grouped);
         if (my.length > 0) setDone(true);
+      } else {
+        setSelected({});
+        setDone(false);
       }
     })();
   }, [user, search.child]);
@@ -109,12 +113,40 @@ function KidsView() {
   };
 
   if (!child) {
+    if (children.length === 0) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6 text-center">
+          <div>
+            <div className="text-6xl mb-3">🍱</div>
+            <p className="text-xl mb-4">צריך להוסיף ילד לפני שמתחילים</p>
+            <Button onClick={() => navigate({ to: "/app" })}>חזרה</Button>
+          </div>
+        </div>
+      );
+    }
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 text-center">
-        <div>
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full text-center">
           <div className="text-6xl mb-3">🍱</div>
-          <p className="text-xl mb-4">צריך להוסיף ילד לפני שמתחילים</p>
-          <Button onClick={() => navigate({ to: "/app" })}>חזרה</Button>
+          <h1 className="text-3xl font-bold mb-2">מי בוחר עכשיו?</h1>
+          <p className="text-muted-foreground mb-8">לחצו על השם שלכם כדי להתחיל לבנות את הקופסה</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {children.map((k) => (
+              <button
+                key={k.id}
+                onClick={() => navigate({ to: "/app/kids", search: { child: k.id } })}
+                className="bg-card rounded-3xl p-6 shadow-card hover:scale-105 active:scale-95 transition-transform"
+              >
+                <div
+                  className="w-24 h-24 mx-auto rounded-3xl flex items-center justify-center text-6xl shadow-soft mb-3"
+                  style={{ backgroundColor: k.avatar_color }}
+                >
+                  {k.avatar_emoji}
+                </div>
+                <p className="text-xl font-bold">{k.name}</p>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     );
