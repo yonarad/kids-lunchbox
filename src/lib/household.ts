@@ -20,10 +20,24 @@ export async function getMyHouseholdId(userId: string): Promise<string | null> {
   return owned?.id ?? null;
 }
 
-export function todayInIsrael(): string {
+export function todayInIsrael(resetHour: number = 0): string {
+  // Compute "effective day" in Israel time. Day rolls over at resetHour (0-23).
+  // Before resetHour we still consider it the previous day.
   const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jerusalem" }));
+  if (d.getHours() < resetHour) {
+    d.setDate(d.getDate() - 1);
+  }
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+export async function getResetHour(householdId: string): Promise<number> {
+  const { data } = await supabase
+    .from("household_settings")
+    .select("reset_hour")
+    .eq("household_id", householdId)
+    .maybeSingle();
+  return data?.reset_hour ?? 12;
 }

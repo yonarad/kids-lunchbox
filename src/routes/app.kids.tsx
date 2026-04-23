@@ -2,7 +2,7 @@ import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyHouseholdId, todayInIsrael } from "@/lib/household";
+import { getMyHouseholdId, todayInIsrael, getResetHour } from "@/lib/household";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check, X } from "lucide-react";
 import { toast } from "sonner";
@@ -28,8 +28,7 @@ function KidsView() {
   const [selected, setSelected] = useState<Record<string, string[]>>({}); // catId -> itemIds
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-
-  const today = todayInIsrael();
+  const [today, setToday] = useState<string>(todayInIsrael(12));
 
   useEffect(() => {
     (async () => {
@@ -37,11 +36,14 @@ function KidsView() {
       const id = await getMyHouseholdId(user.id);
       setHid(id);
       if (!id) return;
+      const resetHour = await getResetHour(id);
+      const t = todayInIsrael(resetHour);
+      setToday(t);
       const [{ data: kids }, { data: c }, { data: f }, { data: sels }] = await Promise.all([
         supabase.from("children").select("*").eq("household_id", id).order("created_at"),
         supabase.from("categories").select("*").eq("household_id", id).order("sort_order"),
         supabase.from("food_items").select("*").eq("household_id", id).eq("is_active", true),
-        supabase.from("selections").select("*").eq("household_id", id).eq("selection_date", today),
+        supabase.from("selections").select("*").eq("household_id", id).eq("selection_date", t),
       ]);
       setChildren(kids ?? []);
       setCats(c ?? []);

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyHouseholdId, todayInIsrael } from "@/lib/household";
+import { getMyHouseholdId, todayInIsrael, getResetHour } from "@/lib/household";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Printer, RefreshCw } from "lucide-react";
@@ -22,18 +22,21 @@ function PrepList() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const today = todayInIsrael();
+  const [today, setToday] = useState<string>(todayInIsrael(12));
 
   const load = async () => {
     if (!user) return;
     setLoading(true);
     const hid = await getMyHouseholdId(user.id);
     if (!hid) return;
+    const resetHour = await getResetHour(hid);
+    const t = todayInIsrael(resetHour);
+    setToday(t);
     const { data } = await supabase
       .from("selections")
       .select("child:children(name,avatar_emoji,avatar_color), item:food_items(name,emoji,image_url,category:categories(name,emoji))")
       .eq("household_id", hid)
-      .eq("selection_date", today);
+      .eq("selection_date", t);
     const grouped = new Map<string, Row>();
     for (const s of data ?? []) {
       const c = s.child as any; const it = s.item as any;
