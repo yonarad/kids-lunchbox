@@ -25,6 +25,8 @@ function Pantry() {
   const [hid, setHid] = useState<string | null>(null);
   const [cats, setCats] = useState<Category[]>([]);
   const [items, setItems] = useState<FoodItem[]>([]);
+  // itemId -> categoryIds[]
+  const [itemCats, setItemCats] = useState<Record<string, string[]>>({});
   const [catDialog, setCatDialog] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [catName, setCatName] = useState("");
@@ -34,6 +36,7 @@ function Pantry() {
   const [itemName, setItemName] = useState("");
   const [itemEmoji, setItemEmoji] = useState("🍎");
   const [itemImage, setItemImage] = useState<string | null>(null);
+  const [itemSelectedCats, setItemSelectedCats] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const load = async () => {
@@ -41,12 +44,21 @@ function Pantry() {
     const id = await getMyHouseholdId(user.id);
     setHid(id);
     if (!id) return;
-    const [{ data: c }, { data: f }] = await Promise.all([
+    const [{ data: c }, { data: f }, { data: fic }] = await Promise.all([
       supabase.from("categories").select("*").eq("household_id", id).order("sort_order"),
       supabase.from("food_items").select("*").eq("household_id", id).order("created_at"),
+      supabase.from("food_item_categories").select("food_item_id, category_id").eq("household_id", id),
     ]);
     setCats(c ?? []);
     setItems(f ?? []);
+    const map: Record<string, string[]> = {};
+    for (const row of fic ?? []) {
+      map[row.food_item_id] = [...(map[row.food_item_id] ?? []), row.category_id];
+    }
+    for (const it of f ?? []) {
+      if (!map[it.id] && it.category_id) map[it.id] = [it.category_id];
+    }
+    setItemCats(map);
   };
   useEffect(() => { load(); }, [user]);
 
@@ -71,10 +83,16 @@ function Pantry() {
   const openNewItem = (categoryId: string) => {
     setItemDialog({ open: true, categoryId, editing: null });
     setItemName(""); setItemEmoji("🍎"); setItemImage(null);
+    setItemSelectedCats([categoryId]);
   };
   const openEditItem = (it: FoodItem) => {
     setItemDialog({ open: true, categoryId: it.category_id, editing: it });
     setItemName(it.name); setItemEmoji(it.emoji ?? "🍎"); setItemImage(it.image_url);
+    setItemSelectedCats(itemCats[it.id] ?? [it.category_id]);
+  };
+
+  const toggleItemCat = (cid: string) => {
+    setItemSelectedCats((prev) => prev.includes(cid) ? prev.filter((x) => x !== cid) : [...prev, cid]);
   };
 
   const handleUpload = async (file: File) => {
@@ -96,14 +114,30 @@ function Pantry() {
 
   const saveItem = async () => {
     if (!hid || !itemDialog.categoryId || !itemName.trim()) return;
-    if (itemDialog.editing) {
-      await supabase.from("food_items").update({ name: itemName.trim(), emoji: itemEmoji, image_url: itemImage }).eq("id", itemDialog.editing.id);
-    } else {
-      await supabase.from("food_items").insert({
-        household_id: hid, category_id: itemDialog.categoryId,
-        name: itemName.trim(), emoji: itemEmoji, image_url: itemImage,
-      });
+    if (itemSelectedCats.length === 0) {
+      toast.error("צריך לבחור לפחות קטגוריה אחת");
+      return;
     }
+    const primaryCat = itemSelectedCats[0];
+    let itemId: string;
+    if (itemDialog.editing) {
+      itemId = itemDialog.editing.id;
+      await supabase.from("food_items")
+        .update({ name: itemName.trim(), emoji: itemEmoji, image_url: itemImage, category_id: primaryCat })
+        .eq("id", itemId);
+    } else {
+      const { data, error } = await supabase.from("food_items").insert({
+        household_id: hid, category_id: primaryCat,
+        name: itemName.trim(), emoji: itemEmoji, image_url: itemImage,
+      }).select("id").single();
+      if (error || !data) { toast.error(error?.message ?? "שגיאה בשמירה"); return; }
+      itemId = data.id;
+    }
+    // Sync junction table
+    await supabase.from("food_item_categories").delete().eq("food_item_id", itemId);
+    const rows = itemSelectedCats.map((cid) => ({ food_item_id: itemId, category_id: cid, household_id: hid }));
+    const { error: ficErr } = await supabase.from("food_item_categories").insert(rows);
+    if (ficErr) { toast.error(ficErr.message); return; }
     setItemDialog({ open: false, categoryId: null, editing: null });
     load();
   };
@@ -129,7 +163,7 @@ function Pantry() {
 
       <div className="space-y-5">
         {cats.map((cat) => {
-          const catItems = items.filter((i) => i.category_id === cat.id);
+          const catItems = items.filter((i) => (itemCats[i.id] ?? [i.category_id]).includes(cat.id));
           return (
             <Card key={cat.id} className="p-5 shadow-card">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -150,25 +184,33 @@ function Pantry() {
                 <p className="text-sm text-muted-foreground text-center py-4">אין פריטים בקטגוריה הזו עדיין</p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {catItems.map((it) => (
-                    <div key={it.id} className={`relative rounded-2xl border-2 p-3 transition-all ${it.is_active ? "bg-card border-border" : "bg-muted/50 border-dashed opacity-60"}`}>
-                      <div className="aspect-square rounded-xl overflow-hidden bg-secondary flex items-center justify-center mb-2">
-                        {it.image_url ? (
-                          <img src={it.image_url} alt={it.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-5xl">{it.emoji}</span>
+                  {catItems.map((it) => {
+                    const otherCats = (itemCats[it.id] ?? []).filter((cid) => cid !== cat.id);
+                    return (
+                      <div key={it.id} className={`relative rounded-2xl border-2 p-3 transition-all ${it.is_active ? "bg-card border-border" : "bg-muted/50 border-dashed opacity-60"}`}>
+                        <div className="aspect-square rounded-xl overflow-hidden bg-secondary flex items-center justify-center mb-2">
+                          {it.image_url ? (
+                            <img src={it.image_url} alt={it.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-5xl">{it.emoji}</span>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold text-center truncate">{it.name}</p>
+                        {otherCats.length > 0 && (
+                          <p className="text-[10px] text-muted-foreground text-center truncate mt-0.5">
+                            גם ב: {otherCats.map((cid) => cats.find((c) => c.id === cid)?.emoji).filter(Boolean).join(" ")}
+                          </p>
                         )}
-                      </div>
-                      <p className="text-sm font-bold text-center truncate">{it.name}</p>
-                      <div className="flex items-center justify-between mt-2 gap-2">
-                        <Switch checked={it.is_active} onCheckedChange={() => toggleActive(it)} className="shrink-0" />
-                        <div className="flex gap-1">
-                          <button onClick={() => openEditItem(it)} className="p-1 hover:bg-secondary rounded"><Pencil className="w-3 h-3" /></button>
-                          <button onClick={() => removeItem(it.id)} className="p-1 hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3 text-destructive" /></button>
+                        <div className="flex items-center justify-between mt-2 gap-2">
+                          <Switch checked={it.is_active} onCheckedChange={() => toggleActive(it)} className="shrink-0" />
+                          <div className="flex gap-1">
+                            <button onClick={() => openEditItem(it)} className="p-1 hover:bg-secondary rounded"><Pencil className="w-3 h-3" /></button>
+                            <button onClick={() => removeItem(it.id)} className="p-1 hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3 text-destructive" /></button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </Card>
@@ -213,6 +255,24 @@ function Pantry() {
               <Input value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="למשל: תפוח אדום" />
             </div>
             <div>
+              <label className="text-sm font-medium block mb-2">קטגוריות (אפשר לבחור כמה — ייספר בכולן)</label>
+              <div className="flex flex-wrap gap-2">
+                {cats.map((c) => {
+                  const on = itemSelectedCats.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleItemCat(c.id)}
+                      className={`px-3 py-2 rounded-xl text-sm flex items-center gap-1 transition-all ${on ? "bg-primary text-primary-foreground ring-2 ring-primary shadow-pop" : "bg-secondary"}`}
+                    >
+                      <span className="text-lg">{c.emoji}</span> {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
               <label className="text-sm font-medium block mb-2">תמונה (אופציונלי)</label>
               <div className="flex items-center gap-3">
                 <div className="w-20 h-20 rounded-xl bg-secondary overflow-hidden flex items-center justify-center shrink-0">
@@ -249,7 +309,7 @@ function Pantry() {
               </div>
             </div>
           </div>
-          <DialogFooter><Button onClick={saveItem} disabled={!itemName.trim()}>שמירה</Button></DialogFooter>
+          <DialogFooter><Button onClick={saveItem} disabled={!itemName.trim() || itemSelectedCats.length === 0}>שמירה</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

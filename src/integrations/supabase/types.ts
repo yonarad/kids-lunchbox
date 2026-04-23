@@ -90,6 +90,42 @@ export type Database = {
           },
         ]
       }
+      food_item_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          food_item_id: string
+          household_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          food_item_id: string
+          household_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          food_item_id?: string
+          household_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_item_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_item_categories_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_items: {
         Row: {
           category_id: string

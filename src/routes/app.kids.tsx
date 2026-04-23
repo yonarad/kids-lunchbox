@@ -25,7 +25,10 @@ function KidsView() {
   const [child, setChild] = useState<Child | null>(null);
   const [cats, setCats] = useState<Category[]>([]);
   const [items, setItems] = useState<FoodItem[]>([]);
-  const [selected, setSelected] = useState<Record<string, string[]>>({}); // catId -> itemIds
+  // Map: itemId -> array of categoryIds it belongs to
+  const [itemCats, setItemCats] = useState<Record<string, string[]>>({});
+  // Selected item ids (flat — one selection per item, counts in all its categories)
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [today, setToday] = useState<string>(todayInIsrael(12));
@@ -39,71 +42,92 @@ function KidsView() {
       const resetHour = await getResetHour(id);
       const t = todayInIsrael(resetHour);
       setToday(t);
-      const [{ data: kids }, { data: c }, { data: f }, { data: sels }] = await Promise.all([
+      const [{ data: kids }, { data: c }, { data: f }, { data: sels }, { data: fic }] = await Promise.all([
         supabase.from("children").select("*").eq("household_id", id).order("created_at"),
         supabase.from("categories").select("*").eq("household_id", id).order("sort_order"),
         supabase.from("food_items").select("*").eq("household_id", id).eq("is_active", true),
         supabase.from("selections").select("*").eq("household_id", id).eq("selection_date", t),
+        supabase.from("food_item_categories").select("food_item_id, category_id").eq("household_id", id),
       ]);
       setChildren(kids ?? []);
       setCats(c ?? []);
       setItems(f ?? []);
-      // Only auto-select a child if one was explicitly chosen via search param
+      // Build item -> categories map (fallback to primary category_id if no link rows)
+      const map: Record<string, string[]> = {};
+      for (const row of fic ?? []) {
+        map[row.food_item_id] = [...(map[row.food_item_id] ?? []), row.category_id];
+      }
+      for (const it of f ?? []) {
+        if (!map[it.id] && it.category_id) map[it.id] = [it.category_id];
+      }
+      setItemCats(map);
       const target = search.child ? (kids ?? []).find((k) => k.id === search.child) ?? null : null;
       setChild(target);
       setActiveCat(c?.[0]?.id ?? null);
-      // pre-load existing selections for this child
       if (target) {
-        const my = (sels ?? []).filter((s) => s.child_id === target.id);
-        const grouped: Record<string, string[]> = {};
-        for (const s of my) {
-          const item = (f ?? []).find((i) => i.id === s.food_item_id);
-          if (!item) continue;
-          grouped[item.category_id] = [...(grouped[item.category_id] ?? []), s.food_item_id];
-        }
-        setSelected(grouped);
+        const my = (sels ?? []).filter((s) => s.child_id === target.id).map((s) => s.food_item_id);
+        setSelectedIds(my);
         if (my.length > 0) setDone(true);
       } else {
-        setSelected({});
+        setSelectedIds([]);
         setDone(false);
       }
     })();
   }, [user, search.child]);
 
-  const itemsForCat = useMemo(() => (catId: string) => items.filter((i) => i.category_id === catId), [items]);
+  // Items visible in a category = any item linked to that category
+  const itemsForCat = useMemo(
+    () => (catId: string) => items.filter((i) => (itemCats[i.id] ?? [i.category_id]).includes(catId)),
+    [items, itemCats]
+  );
+
+  // Count selections in a category (any selected item linked to it)
+  const countForCat = (catId: string) =>
+    selectedIds.filter((id) => (itemCats[id] ?? []).includes(catId)).length;
 
   const toggleItem = (catId: string, itemId: string) => {
     const cat = cats.find((c) => c.id === catId)!;
-    const current = selected[catId] ?? [];
-    if (current.includes(itemId)) {
-      setSelected({ ...selected, [catId]: current.filter((id) => id !== itemId) });
-    } else {
-      if (current.length >= cat.max_selections) {
-        // replace oldest
-        setSelected({ ...selected, [catId]: [...current.slice(1), itemId] });
-      } else {
-        setSelected({ ...selected, [catId]: [...current, itemId] });
+    if (selectedIds.includes(itemId)) {
+      setSelectedIds(selectedIds.filter((id) => id !== itemId));
+      return;
+    }
+    // Check the quota of EVERY category this item belongs to
+    const itemCatIds = itemCats[itemId] ?? [catId];
+    for (const cid of itemCatIds) {
+      const c = cats.find((x) => x.id === cid);
+      if (!c) continue;
+      const current = countForCat(cid);
+      if (current >= c.max_selections) {
+        toast.error(`כבר בחרתם את המקסימום בקטגוריה "${c.name}"`);
+        return;
       }
     }
+    setSelectedIds([...selectedIds, itemId]);
+    void cat;
   };
 
   const surpriseMe = () => {
-    const newSel: Record<string, string[]> = {};
+    const newSel: string[] = [];
+    const counts: Record<string, number> = {};
     for (const cat of cats) {
-      const pool = itemsForCat(cat.id);
-      if (pool.length === 0) continue;
+      const pool = itemsForCat(cat.id).filter((i) => !newSel.includes(i.id));
       const shuffled = [...pool].sort(() => Math.random() - 0.5);
-      newSel[cat.id] = shuffled.slice(0, Math.min(cat.max_selections, pool.length)).map((i) => i.id);
+      for (const it of shuffled) {
+        const itCats = itemCats[it.id] ?? [cat.id];
+        if (itCats.some((cid) => (counts[cid] ?? 0) >= (cats.find((c) => c.id === cid)?.max_selections ?? 1))) continue;
+        newSel.push(it.id);
+        for (const cid of itCats) counts[cid] = (counts[cid] ?? 0) + 1;
+        if ((counts[cat.id] ?? 0) >= cat.max_selections) break;
+      }
     }
-    setSelected(newSel);
+    setSelectedIds(newSel);
     toast.success("אבא בחר בשבילך! 🎲");
   };
 
   const finish = async () => {
     if (!child || !hid) return;
-    // Replace today's selections for this child
     await supabase.from("selections").delete().eq("household_id", hid).eq("child_id", child.id).eq("selection_date", today);
-    const rows = Object.values(selected).flat().map((itemId) => ({
+    const rows = selectedIds.map((itemId) => ({
       household_id: hid, child_id: child.id, food_item_id: itemId, selection_date: today,
     }));
     if (rows.length > 0) {
@@ -156,11 +180,7 @@ function KidsView() {
 
   const removeItem = async (itemId: string) => {
     if (!child || !hid) return;
-    const item = items.find((i) => i.id === itemId);
-    if (!item) return;
-    const newSel = { ...selected };
-    newSel[item.category_id] = (newSel[item.category_id] ?? []).filter((id) => id !== itemId);
-    setSelected(newSel);
+    setSelectedIds(selectedIds.filter((id) => id !== itemId));
     const { error } = await supabase
       .from("selections")
       .delete()
@@ -172,11 +192,11 @@ function KidsView() {
     toast.success("הוסר מהקופסה");
   };
 
-  if (done) return <BoxView child={child} cats={cats} items={items} selected={selected} onEdit={() => setDone(false)} onRemove={removeItem} />;
+  if (done) return <BoxView child={child} items={items} selectedIds={selectedIds} onEdit={() => setDone(false)} onRemove={removeItem} />;
 
   const activeCategory = cats.find((c) => c.id === activeCat);
   const activeItems = activeCat ? itemsForCat(activeCat) : [];
-  const totalSelected = Object.values(selected).flat().length;
+  const totalSelected = selectedIds.length;
 
   return (
     <div className="min-h-screen p-4 md:p-6 pt-16">
@@ -203,7 +223,7 @@ function KidsView() {
       {/* Category tabs */}
       <div className="max-w-5xl mx-auto mb-4 flex gap-2 overflow-x-auto pb-2">
         {cats.map((c) => {
-          const count = (selected[c.id] ?? []).length;
+          const count = countForCat(c.id);
           const isActive = c.id === activeCat;
           return (
             <button
@@ -234,11 +254,12 @@ function KidsView() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {activeItems.map((it) => {
-              const isSel = (selected[it.category_id] ?? []).includes(it.id);
+              const isSel = selectedIds.includes(it.id);
+              const otherCats = (itemCats[it.id] ?? []).filter((cid) => cid !== activeCat);
               return (
                 <button
                   key={it.id}
-                  onClick={() => toggleItem(it.category_id, it.id)}
+                  onClick={() => toggleItem(activeCat!, it.id)}
                   className={`relative rounded-3xl overflow-hidden transition-all ${isSel ? "ring-4 ring-primary scale-95 shadow-pop" : "shadow-card hover:scale-105 active:scale-95"}`}
                 >
                   <div className="aspect-square bg-secondary flex items-center justify-center">
@@ -250,6 +271,11 @@ function KidsView() {
                   </div>
                   <div className="bg-card p-2">
                     <p className="text-sm font-bold text-center truncate">{it.name}</p>
+                    {otherCats.length > 0 && (
+                      <p className="text-[10px] text-muted-foreground text-center truncate">
+                        גם ב: {otherCats.map((cid) => cats.find((c) => c.id === cid)?.emoji).filter(Boolean).join(" ")}
+                      </p>
+                    )}
                   </div>
                   {isSel && (
                     <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-pop animate-pop-in">
@@ -280,13 +306,13 @@ function KidsView() {
 }
 
 function BoxView({
-  child, cats, items, selected, onEdit, onRemove,
+  child, items, selectedIds, onEdit, onRemove,
 }: {
-  child: Child; cats: Category[]; items: FoodItem[];
-  selected: Record<string, string[]>; onEdit: () => void;
+  child: Child; items: FoodItem[];
+  selectedIds: string[]; onEdit: () => void;
   onRemove: (itemId: string) => void;
 }) {
-  const allSelectedItems = Object.values(selected).flat().map((id) => items.find((i) => i.id === id)).filter(Boolean) as FoodItem[];
+  const allSelectedItems = selectedIds.map((id) => items.find((i) => i.id === id)).filter(Boolean) as FoodItem[];
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 pt-16">
       <h1 className="text-3xl md:text-4xl mb-2">הקופסה של {child.name} מוכנה! 🎉</h1>
