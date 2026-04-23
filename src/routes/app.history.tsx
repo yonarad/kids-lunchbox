@@ -12,7 +12,7 @@ export const Route = createFileRoute("/app/history")({
 interface Sel {
   selection_date: string;
   child: { name: string; avatar_emoji: string; avatar_color: string } | null;
-  item: { name: string; emoji: string | null } | null;
+  item: { name: string; emoji: string | null; image_url: string | null } | null;
 }
 
 function History() {
@@ -27,7 +27,7 @@ function History() {
       const since = new Date(); since.setDate(since.getDate() - 30);
       const { data: rows } = await supabase
         .from("selections")
-        .select("selection_date, child:children(name,avatar_emoji,avatar_color), item:food_items(name,emoji)")
+        .select("selection_date, child:children(name,avatar_emoji,avatar_color), item:food_items(name,emoji,image_url)")
         .eq("household_id", hid)
         .gte("selection_date", since.toISOString().split("T")[0])
         .order("selection_date", { ascending: false });
@@ -75,8 +75,13 @@ function History() {
                       <p className="font-bold text-sm mb-1">{childName}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {sels.map((s, i) => s.item && (
-                          <span key={i} className="bg-card rounded-lg px-2 py-1 text-xs">
-                            {s.item.emoji} {s.item.name}
+                          <span key={i} className="bg-card rounded-lg px-2 py-1 text-xs inline-flex items-center gap-1">
+                            {s.item.image_url ? (
+                              <img src={s.item.image_url} alt="" className="w-5 h-5 rounded object-cover" />
+                            ) : (
+                              <span>{s.item.emoji}</span>
+                            )}
+                            {s.item.name}
                           </span>
                         ))}
                       </div>

@@ -15,7 +15,7 @@ interface Row {
   child_name: string;
   child_emoji: string;
   child_color: string;
-  items: { name: string; emoji: string | null; category: string; category_emoji: string }[];
+  items: { name: string; emoji: string | null; image_url: string | null; category: string; category_emoji: string }[];
 }
 
 function PrepList() {
@@ -31,7 +31,7 @@ function PrepList() {
     if (!hid) return;
     const { data } = await supabase
       .from("selections")
-      .select("child:children(name,avatar_emoji,avatar_color), item:food_items(name,emoji,category:categories(name,emoji))")
+      .select("child:children(name,avatar_emoji,avatar_color), item:food_items(name,emoji,image_url,category:categories(name,emoji))")
       .eq("household_id", hid)
       .eq("selection_date", today);
     const grouped = new Map<string, Row>();
@@ -42,7 +42,7 @@ function PrepList() {
       if (!grouped.has(key)) {
         grouped.set(key, { child_name: c.name, child_emoji: c.avatar_emoji, child_color: c.avatar_color, items: [] });
       }
-      grouped.get(key)!.items.push({ name: it.name, emoji: it.emoji, category: it.category?.name ?? "", category_emoji: it.category?.emoji ?? "" });
+      grouped.get(key)!.items.push({ name: it.name, emoji: it.emoji, image_url: it.image_url ?? null, category: it.category?.name ?? "", category_emoji: it.category?.emoji ?? "" });
     }
     setRows(Array.from(grouped.values()));
     setLoading(false);
@@ -84,7 +84,11 @@ function PrepList() {
             <ul className="space-y-2">
               {r.items.map((it, i) => (
                 <li key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50">
-                  <span className="text-2xl">{it.emoji ?? it.category_emoji}</span>
+                  {it.image_url ? (
+                    <img src={it.image_url} alt={it.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
+                  ) : (
+                    <span className="text-2xl">{it.emoji ?? it.category_emoji}</span>
+                  )}
                   <div className="flex-1">
                     <p className="font-medium">{it.name}</p>
                     <p className="text-xs text-muted-foreground">{it.category}</p>
