@@ -14,13 +14,300 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          color: string
+          created_at: string
+          emoji: string
+          household_id: string
+          id: string
+          max_selections: number
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          emoji?: string
+          household_id: string
+          id?: string
+          max_selections?: number
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          emoji?: string
+          household_id?: string
+          id?: string
+          max_selections?: number
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      children: {
+        Row: {
+          avatar_color: string
+          avatar_emoji: string
+          created_at: string
+          household_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          avatar_color?: string
+          avatar_emoji?: string
+          created_at?: string
+          household_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          avatar_color?: string
+          avatar_emoji?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "children_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_items: {
+        Row: {
+          category_id: string
+          created_at: string
+          emoji: string | null
+          household_id: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          emoji?: string | null
+          household_id: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          emoji?: string | null
+          household_id?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_members: {
+        Row: {
+          created_at: string
+          household_id: string
+          id: string
+          invited_email: string | null
+          role: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          household_id: string
+          id?: string
+          invited_email?: string | null
+          role?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          household_id?: string
+          id?: string
+          invited_email?: string | null
+          role?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_settings: {
+        Row: {
+          email_notifications: boolean
+          household_id: string
+          morning_email_hour: number
+          reminder_hour: number
+          reset_hour: number
+        }
+        Insert: {
+          email_notifications?: boolean
+          household_id: string
+          morning_email_hour?: number
+          reminder_hour?: number
+          reset_hour?: number
+        }
+        Update: {
+          email_notifications?: boolean
+          household_id?: string
+          morning_email_hour?: number
+          reminder_hour?: number
+          reset_hour?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_settings_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: true
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      selections: {
+        Row: {
+          child_id: string
+          created_at: string
+          food_item_id: string
+          household_id: string
+          id: string
+          selection_date: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          food_item_id: string
+          household_id: string
+          id?: string
+          selection_date?: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          food_item_id?: string
+          household_id?: string
+          id?: string
+          selection_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "selections_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "selections_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "selections_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_household_member: {
+        Args: { _household_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
