@@ -240,8 +240,8 @@ function BoxView({
       <p className="text-muted-foreground mb-6">הנה מה שיש בפנים:</p>
 
       {/* Lunchbox illustration */}
-      <div className="relative w-full max-w-md bg-gradient-leaf rounded-[2.5rem] p-5 shadow-pop border-8 border-amber-900/30">
-        <div className="bg-amber-50 rounded-3xl p-4 grid grid-cols-2 gap-3 min-h-[16rem]">
+      <div className="relative w-full max-w-md bg-gradient-leaf rounded-[2.5rem] p-5 shadow-pop border-8 border-secondary-foreground/20">
+        <div className="bg-secondary rounded-3xl p-4 grid grid-cols-2 gap-3 min-h-[16rem]">
           {allSelectedItems.length === 0 ? (
             <div className="col-span-2 text-center py-12 text-muted-foreground">קופסה ריקה</div>
           ) : (
@@ -256,7 +256,7 @@ function BoxView({
             ))
           )}
         </div>
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-3 bg-amber-900/40 rounded-full" />
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-3 bg-secondary-foreground/30 rounded-full" />
       </div>
 
       <div className="mt-6 flex gap-2">
