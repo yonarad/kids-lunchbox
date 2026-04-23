@@ -160,8 +160,8 @@ function Pantry() {
                         )}
                       </div>
                       <p className="text-sm font-bold text-center truncate">{it.name}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <Switch checked={it.is_active} onCheckedChange={() => toggleActive(it)} />
+                      <div className="flex items-center justify-between mt-2 gap-2">
+                        <Switch checked={it.is_active} onCheckedChange={() => toggleActive(it)} className="shrink-0" />
                         <div className="flex gap-1">
                           <button onClick={() => openEditItem(it)} className="p-1 hover:bg-secondary rounded"><Pencil className="w-3 h-3" /></button>
                           <button onClick={() => removeItem(it.id)} className="p-1 hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3 text-destructive" /></button>
