@@ -38,16 +38,22 @@ function AppLayout() {
   const toggleKid = (v: boolean) => {
     setKidMode(v);
     localStorage.setItem("kidMode", v ? "1" : "0");
-    if (v) navigate({ to: "/app/kids", search: { child: "" } });
-    else navigate({ to: "/app" });
+    if (v) {
+      navigate({ to: "/app/kids", search: { child: "" } });
+    } else {
+      // Force exit from kid routes back to dashboard
+      navigate({ to: "/app", replace: true });
+    }
   };
 
   if (loading || !user) {
     return <div className="min-h-screen flex items-center justify-center text-3xl">🍱</div>;
   }
 
-  // Kid mode: clean fullscreen, no nav
-  if (kidMode || location.pathname.startsWith("/app/kids") || location.pathname.startsWith("/app/box")) {
+  const onKidRoute = location.pathname.startsWith("/app/kids") || location.pathname.startsWith("/app/box");
+
+  // Kid mode: clean fullscreen, no nav. Only when actually on a kid route AND kidMode is on.
+  if (kidMode && onKidRoute) {
     return (
       <div className="min-h-screen bg-gradient-hero">
         <div className="fixed top-3 left-3 z-50 bg-card/90 backdrop-blur rounded-full px-4 py-2 shadow-card flex items-center gap-2">
