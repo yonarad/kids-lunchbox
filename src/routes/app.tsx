@@ -38,7 +38,7 @@ function AppLayout() {
   const toggleKid = (v: boolean) => {
     setKidMode(v);
     localStorage.setItem("kidMode", v ? "1" : "0");
-    if (v) navigate({ to: "/app/kids" });
+    if (v) navigate({ to: "/app/kids", search: { child: "" } });
     else navigate({ to: "/app" });
   };
 

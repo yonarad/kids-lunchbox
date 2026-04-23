@@ -1,22 +1,23 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export async function getMyHouseholdId(userId: string): Promise<string | null> {
-  // First try owned household
-  const { data: owned } = await supabase
-    .from("households")
-    .select("id")
-    .eq("owner_id", userId)
-    .limit(1)
-    .maybeSingle();
-  if (owned) return owned.id;
-
+  // Prefer a household the user was invited to (shared with them)
   const { data: member } = await supabase
     .from("household_members")
     .select("household_id")
     .eq("user_id", userId)
     .limit(1)
     .maybeSingle();
-  return member?.household_id ?? null;
+  if (member?.household_id) return member.household_id;
+
+  // Fall back to a household they own
+  const { data: owned } = await supabase
+    .from("households")
+    .select("id")
+    .eq("owner_id", userId)
+    .limit(1)
+    .maybeSingle();
+  return owned?.id ?? null;
 }
 
 export function todayInIsrael(): string {
