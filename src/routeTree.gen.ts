@@ -9,38 +9,144 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppPrepRouteImport } from './routes/app.prep'
+import { Route as AppPantryRouteImport } from './routes/app.pantry'
+import { Route as AppKidsRouteImport } from './routes/app.kids'
+import { Route as AppHistoryRouteImport } from './routes/app.history'
+import { Route as AppFamilyRouteImport } from './routes/app.family'
 
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPrepRoute = AppPrepRouteImport.update({
+  id: '/prep',
+  path: '/prep',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPantryRoute = AppPantryRouteImport.update({
+  id: '/pantry',
+  path: '/pantry',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppKidsRoute = AppKidsRouteImport.update({
+  id: '/kids',
+  path: '/kids',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistoryRoute = AppHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFamilyRoute = AppFamilyRouteImport.update({
+  id: '/family',
+  path: '/family',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/family': typeof AppFamilyRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/kids': typeof AppKidsRoute
+  '/app/pantry': typeof AppPantryRoute
+  '/app/prep': typeof AppPrepRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/family': typeof AppFamilyRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/kids': typeof AppKidsRoute
+  '/app/pantry': typeof AppPantryRoute
+  '/app/prep': typeof AppPrepRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/family': typeof AppFamilyRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/kids': typeof AppKidsRoute
+  '/app/pantry': typeof AppPantryRoute
+  '/app/prep': typeof AppPrepRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/family'
+    | '/app/history'
+    | '/app/kids'
+    | '/app/pantry'
+    | '/app/prep'
+    | '/app/settings'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/app/family'
+    | '/app/history'
+    | '/app/kids'
+    | '/app/pantry'
+    | '/app/prep'
+    | '/app/settings'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/family'
+    | '/app/history'
+    | '/app/kids'
+    | '/app/pantry'
+    | '/app/prep'
+    | '/app/settings'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +154,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/prep': {
+      id: '/app/prep'
+      path: '/prep'
+      fullPath: '/app/prep'
+      preLoaderRoute: typeof AppPrepRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/pantry': {
+      id: '/app/pantry'
+      path: '/pantry'
+      fullPath: '/app/pantry'
+      preLoaderRoute: typeof AppPantryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/kids': {
+      id: '/app/kids'
+      path: '/kids'
+      fullPath: '/app/kids'
+      preLoaderRoute: typeof AppKidsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/history': {
+      id: '/app/history'
+      path: '/history'
+      fullPath: '/app/history'
+      preLoaderRoute: typeof AppHistoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/family': {
+      id: '/app/family'
+      path: '/family'
+      fullPath: '/app/family'
+      preLoaderRoute: typeof AppFamilyRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppFamilyRoute: typeof AppFamilyRoute
+  AppHistoryRoute: typeof AppHistoryRoute
+  AppKidsRoute: typeof AppKidsRoute
+  AppPantryRoute: typeof AppPantryRoute
+  AppPrepRoute: typeof AppPrepRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppFamilyRoute: AppFamilyRoute,
+  AppHistoryRoute: AppHistoryRoute,
+  AppKidsRoute: AppKidsRoute,
+  AppPantryRoute: AppPantryRoute,
+  AppPrepRoute: AppPrepRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
