@@ -154,7 +154,25 @@ function KidsView() {
     );
   }
 
-  if (done) return <BoxView child={child} cats={cats} items={items} selected={selected} onEdit={() => setDone(false)} />;
+  const removeItem = async (itemId: string) => {
+    if (!child || !hid) return;
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+    const newSel = { ...selected };
+    newSel[item.category_id] = (newSel[item.category_id] ?? []).filter((id) => id !== itemId);
+    setSelected(newSel);
+    const { error } = await supabase
+      .from("selections")
+      .delete()
+      .eq("household_id", hid)
+      .eq("child_id", child.id)
+      .eq("selection_date", today)
+      .eq("food_item_id", itemId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("הוסר מהקופסה");
+  };
+
+  if (done) return <BoxView child={child} cats={cats} items={items} selected={selected} onEdit={() => setDone(false)} onRemove={removeItem} />;
 
   const activeCategory = cats.find((c) => c.id === activeCat);
   const activeItems = activeCat ? itemsForCat(activeCat) : [];
@@ -262,10 +280,11 @@ function KidsView() {
 }
 
 function BoxView({
-  child, cats, items, selected, onEdit,
+  child, cats, items, selected, onEdit, onRemove,
 }: {
   child: Child; cats: Category[]; items: FoodItem[];
   selected: Record<string, string[]>; onEdit: () => void;
+  onRemove: (itemId: string) => void;
 }) {
   const allSelectedItems = Object.values(selected).flat().map((id) => items.find((i) => i.id === id)).filter(Boolean) as FoodItem[];
   return (
@@ -280,12 +299,20 @@ function BoxView({
             <div className="col-span-2 text-center py-12 text-muted-foreground">קופסה ריקה</div>
           ) : (
             allSelectedItems.map((it, i) => (
-              <div key={it.id + i} className="aspect-square rounded-2xl bg-white shadow-soft overflow-hidden flex items-center justify-center animate-pop-in">
+              <div key={it.id + i} className="relative aspect-square rounded-2xl bg-white shadow-soft overflow-hidden flex items-center justify-center animate-pop-in">
                 {it.image_url ? (
                   <img src={it.image_url} alt={it.name} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-6xl">{it.emoji}</span>
                 )}
+                <button
+                  type="button"
+                  onClick={() => onRemove(it.id)}
+                  aria-label={`הסר ${it.name}`}
+                  className="absolute top-1 left-1 bg-destructive text-destructive-foreground rounded-full w-7 h-7 flex items-center justify-center shadow-pop hover:scale-110 active:scale-95 transition-transform"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             ))
           )}
