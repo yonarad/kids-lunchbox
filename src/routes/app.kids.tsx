@@ -154,7 +154,25 @@ function KidsView() {
     );
   }
 
-  if (done) return <BoxView child={child} cats={cats} items={items} selected={selected} onEdit={() => setDone(false)} />;
+  const removeItem = async (itemId: string) => {
+    if (!child || !hid) return;
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
+    const newSel = { ...selected };
+    newSel[item.category_id] = (newSel[item.category_id] ?? []).filter((id) => id !== itemId);
+    setSelected(newSel);
+    const { error } = await supabase
+      .from("selections")
+      .delete()
+      .eq("household_id", hid)
+      .eq("child_id", child.id)
+      .eq("selection_date", today)
+      .eq("food_item_id", itemId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("הוסר מהקופסה");
+  };
+
+  if (done) return <BoxView child={child} cats={cats} items={items} selected={selected} onEdit={() => setDone(false)} onRemove={removeItem} />;
 
   const activeCategory = cats.find((c) => c.id === activeCat);
   const activeItems = activeCat ? itemsForCat(activeCat) : [];
