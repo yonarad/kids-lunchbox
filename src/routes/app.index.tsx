@@ -240,7 +240,7 @@ function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {children.map((c) => (
             <Card key={c.id} className="p-5 shadow-card hover:shadow-pop transition-all relative group">
-              <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-2 left-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => openEdit(c)}
                   className="p-1.5 rounded-lg bg-secondary text-foreground"
