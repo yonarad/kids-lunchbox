@@ -24,13 +24,21 @@ function History() {
       if (!user) return;
       const hid = await getMyHouseholdId(user.id);
       if (!hid) return;
+      // If user is a linked child, restrict to their selections only
+      const { data: myChild } = await supabase
+        .from("children")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
       const since = new Date(); since.setDate(since.getDate() - 30);
-      const { data: rows } = await supabase
+      let q = supabase
         .from("selections")
         .select("selection_date, child:children(name,avatar_emoji,avatar_color), item:food_items(name,emoji,image_url)")
         .eq("household_id", hid)
         .gte("selection_date", since.toISOString().split("T")[0])
         .order("selection_date", { ascending: false });
+      if (myChild?.id) q = q.eq("child_id", myChild.id);
+      const { data: rows } = await q;
       setData((rows as any) ?? []);
     })();
   }, [user]);

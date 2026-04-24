@@ -49,10 +49,14 @@ function KidsView() {
         supabase.from("selections").select("*").eq("household_id", id).eq("selection_date", t),
         supabase.from("food_item_categories").select("food_item_id, category_id").eq("household_id", id),
       ]);
-      setChildren(kids ?? []);
+
+      // If this user is a child themselves, restrict to that child only
+      const myChildRecord = (kids ?? []).find((k) => (k as any).user_id === user.id) ?? null;
+      const visibleKids = myChildRecord ? [myChildRecord] : (kids ?? []);
+      setChildren(visibleKids);
+
       setCats(c ?? []);
       setItems(f ?? []);
-      // Build item -> categories map (fallback to primary category_id if no link rows)
       const map: Record<string, string[]> = {};
       for (const row of fic ?? []) {
         map[row.food_item_id] = [...(map[row.food_item_id] ?? []), row.category_id];
@@ -61,11 +65,18 @@ function KidsView() {
         if (!map[it.id] && it.category_id) map[it.id] = [it.category_id];
       }
       setItemCats(map);
-      const target = search.child ? (kids ?? []).find((k) => k.id === search.child) ?? null : null;
+
+      // Auto-pick child: if kid user → their record; else from search
+      let target: Child | null = null;
+      if (myChildRecord) {
+        target = myChildRecord;
+      } else if (search.child) {
+        target = (kids ?? []).find((k) => k.id === search.child) ?? null;
+      }
       setChild(target);
       setActiveCat(c?.[0]?.id ?? null);
       if (target) {
-        const my = (sels ?? []).filter((s) => s.child_id === target.id).map((s) => s.food_item_id);
+        const my = (sels ?? []).filter((s) => s.child_id === target!.id).map((s) => s.food_item_id);
         setSelectedIds(my);
         if (my.length > 0) setDone(true);
       } else {

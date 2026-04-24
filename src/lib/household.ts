@@ -10,14 +10,33 @@ export async function getMyHouseholdId(userId: string): Promise<string | null> {
     .maybeSingle();
   if (member?.household_id) return member.household_id;
 
-  // Fall back to a household they own
+  // Or a household they own
   const { data: owned } = await supabase
     .from("households")
     .select("id")
     .eq("owner_id", userId)
     .limit(1)
     .maybeSingle();
-  return owned?.id ?? null;
+  if (owned?.id) return owned.id;
+
+  // Or a household where they are linked as a child
+  const { data: kid } = await supabase
+    .from("children")
+    .select("household_id")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+  return kid?.household_id ?? null;
+}
+
+// Returns the child record if this user is linked as a child, else null
+export async function getMyChildRecord(userId: string) {
+  const { data } = await supabase
+    .from("children")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data;
 }
 
 export function todayInIsrael(resetHour: number = 0): string {
