@@ -167,7 +167,7 @@ function AppLayout() {
           </div>
         </div>
         <nav className="container mx-auto px-2 pb-2 flex gap-1 overflow-x-auto">
-          {NAV.map((item) => {
+          {PARENT_NAV.map((item) => {
             const Icon = item.icon;
             const active = item.exact
               ? location.pathname === item.to
