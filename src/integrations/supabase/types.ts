@@ -60,25 +60,31 @@ export type Database = {
           avatar_color: string
           avatar_emoji: string
           created_at: string
+          email: string | null
           household_id: string
           id: string
           name: string
+          user_id: string | null
         }
         Insert: {
           avatar_color?: string
           avatar_emoji?: string
           created_at?: string
+          email?: string | null
           household_id: string
           id?: string
           name: string
+          user_id?: string | null
         }
         Update: {
           avatar_color?: string
           avatar_emoji?: string
           created_at?: string
+          email?: string | null
           household_id?: string
           id?: string
           name?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -340,6 +346,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_household_child: {
+        Args: { _household_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_household_member: {
         Args: { _household_id: string; _user_id: string }
         Returns: boolean
