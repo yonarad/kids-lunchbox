@@ -40,17 +40,43 @@ export async function getMyChildRecord(userId: string) {
 }
 
 export function todayInIsrael(resetHour: number = 0): string {
-  // Compute the "target lunch day" in Israel time.
-  // At resetHour (e.g. 12:00) we switch to selecting for the NEXT day.
-  // Before resetHour: selecting for today. From resetHour onwards: selecting for tomorrow.
-  const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jerusalem" }));
-  if (d.getHours() >= resetHour) {
-    d.setDate(d.getDate() + 1);
-  }
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  // Compute the "target lunch day" in Israel time using Intl parts (timezone-safe).
+  // Before resetHour: today's date. From resetHour onwards: tomorrow's date.
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jerusalem",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const y = parseInt(get("year"));
+  const m = parseInt(get("month"));
+  const d = parseInt(get("day"));
+  let hour = parseInt(get("hour"));
+  // Intl can return "24" for midnight in some runtimes
+  if (hour === 24) hour = 0;
+  // Build a UTC date for the Israel calendar day, then optionally bump to tomorrow
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (hour >= resetHour) dt.setUTCDate(dt.getUTCDate() + 1);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+// Format a YYYY-MM-DD date string as a Hebrew date without timezone shifts.
+export function formatHebrewDate(dateStr: string): string {
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return dateStr;
+  const dt = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return dt.toLocaleDateString("he-IL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
 }
 
 export async function getResetHour(householdId: string): Promise<number> {
