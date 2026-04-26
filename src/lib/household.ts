@@ -40,11 +40,12 @@ export async function getMyChildRecord(userId: string) {
 }
 
 export function todayInIsrael(resetHour: number = 0): string {
-  // Compute "effective day" in Israel time. Day rolls over at resetHour (0-23).
-  // Before resetHour we still consider it the previous day.
+  // Compute the "target lunch day" in Israel time.
+  // At resetHour (e.g. 12:00) we switch to selecting for the NEXT day.
+  // Before resetHour: selecting for today. From resetHour onwards: selecting for tomorrow.
   const d = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jerusalem" }));
-  if (d.getHours() < resetHour) {
-    d.setDate(d.getDate() - 1);
+  if (d.getHours() >= resetHour) {
+    d.setDate(d.getDate() + 1);
   }
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
