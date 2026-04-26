@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyHouseholdId, todayInIsrael, getResetHour } from "@/lib/household";
+import { getMyHouseholdId, todayInIsrael, getResetHour, formatHebrewDate } from "@/lib/household";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Printer, RefreshCw } from "lucide-react";
