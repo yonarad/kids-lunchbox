@@ -58,20 +58,46 @@ function PrepList() {
     const resetHour = await getResetHour(hid);
     const t = todayInIsrael(resetHour);
     setToday(t);
-    const { data } = await supabase
+    const { data: selections } = await supabase
       .from("selections")
-      .select("child:children(name,avatar_emoji,avatar_color), item:food_items(name,emoji,image_url,category:categories(name,emoji))")
+      .select("child_id, food_item_id")
       .eq("household_id", hid)
       .eq("selection_date", t);
+
+    const childIds = [...new Set((selections ?? []).map((s) => s.child_id))];
+    const itemIds = [...new Set((selections ?? []).map((s) => s.food_item_id))];
+
+    if (childIds.length === 0 || itemIds.length === 0) {
+      setRows([]);
+      setLoading(false);
+      return;
+    }
+
+    const [{ data: children }, { data: items }] = await Promise.all([
+      supabase.from("children").select("id,name,avatar_emoji,avatar_color").in("id", childIds),
+      supabase.from("food_items").select("id,name,emoji,image_url,category_id").in("id", itemIds),
+    ]);
+
+    const categoryIds = [...new Set((items ?? []).map((it) => it.category_id))];
+    const { data: categories } = categoryIds.length > 0
+      ? await supabase.from("categories").select("id,name,emoji").in("id", categoryIds)
+      : { data: [] as CategoryRow[] };
+
+    const childrenById = new Map((children as ChildRow[] | null ?? []).map((c) => [c.id, c]));
+    const itemsById = new Map((items as FoodRow[] | null ?? []).map((it) => [it.id, it]));
+    const categoriesById = new Map((categories as CategoryRow[] | null ?? []).map((c) => [c.id, c]));
+
     const grouped = new Map<string, Row>();
-    for (const s of data ?? []) {
-      const c = s.child as any; const it = s.item as any;
+    for (const s of (selections as SelectionRow[] | null ?? [])) {
+      const c = childrenById.get(s.child_id);
+      const it = itemsById.get(s.food_item_id);
       if (!c || !it) continue;
-      const key = c.name;
+      const category = categoriesById.get(it.category_id);
+      const key = c.id;
       if (!grouped.has(key)) {
         grouped.set(key, { child_name: c.name, child_emoji: c.avatar_emoji, child_color: c.avatar_color, items: [] });
       }
-      grouped.get(key)!.items.push({ name: it.name, emoji: it.emoji, image_url: it.image_url ?? null, category: it.category?.name ?? "", category_emoji: it.category?.emoji ?? "" });
+      grouped.get(key)!.items.push({ name: it.name, emoji: it.emoji, image_url: it.image_url ?? null, category: category?.name ?? "", category_emoji: category?.emoji ?? "" });
     }
     setRows(Array.from(grouped.values()));
     setLoading(false);
