@@ -69,7 +69,7 @@ function History() {
         Array.from(byDate.entries()).map(([date, childMap]) => (
           <Card key={date} className="p-5 shadow-card">
             <h2 className="font-bold text-lg mb-3">
-              {new Date(date).toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long" })}
+              {formatHebrewDate(date)}
             </h2>
             <div className="space-y-3">
               {Array.from(childMap.entries()).map(([childName, sels]) => {
