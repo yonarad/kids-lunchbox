@@ -23,7 +23,6 @@ function PrepList() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [today, setToday] = useState<string>(todayInIsrael(12));
-  const [loaded, setLoaded] = useState(false);
 
   const load = async () => {
     if (!user) return;
