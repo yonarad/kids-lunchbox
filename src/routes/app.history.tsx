@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyHouseholdId } from "@/lib/household";
+import { getMyHouseholdId, formatHebrewDate } from "@/lib/household";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/app/history")({
