@@ -18,6 +18,32 @@ interface Row {
   items: { name: string; emoji: string | null; image_url: string | null; category: string; category_emoji: string }[];
 }
 
+interface SelectionRow {
+  child_id: string;
+  food_item_id: string;
+}
+
+interface ChildRow {
+  id: string;
+  name: string;
+  avatar_emoji: string;
+  avatar_color: string;
+}
+
+interface FoodRow {
+  id: string;
+  name: string;
+  emoji: string | null;
+  image_url: string | null;
+  category_id: string;
+}
+
+interface CategoryRow {
+  id: string;
+  name: string;
+  emoji: string;
+}
+
 function PrepList() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
