@@ -58,7 +58,7 @@ function PrepList() {
       <div className="flex items-center justify-between flex-wrap gap-3 print:hidden">
         <div>
           <h1 className="text-3xl font-bold">רשימת הכנה 📋</h1>
-          <p className="text-muted-foreground">{new Date(today).toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long" })}</p>
+          <p className="text-muted-foreground">{formatHebrewDate(today)}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={load}><RefreshCw className="w-4 h-4 ml-1" /> רענון</Button>
