@@ -31,6 +31,7 @@ function Dashboard() {
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [children, setChildren] = useState<Child[]>([]);
   const [todayCounts, setTodayCounts] = useState<Record<string, number>>({});
+  const [parentPicks, setParentPicks] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
