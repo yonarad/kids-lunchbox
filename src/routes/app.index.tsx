@@ -31,6 +31,7 @@ function Dashboard() {
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [children, setChildren] = useState<Child[]>([]);
   const [todayCounts, setTodayCounts] = useState<Record<string, number>>({});
+  const [parentPicks, setParentPicks] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -59,6 +60,14 @@ function Dashboard() {
     const counts: Record<string, number> = {};
     (sels ?? []).forEach((s) => { counts[s.child_id] = (counts[s.child_id] ?? 0) + 1; });
     setTodayCounts(counts);
+    const { data: picks } = await supabase
+      .from("parent_picks")
+      .select("child_id")
+      .eq("household_id", hid)
+      .eq("selection_date", today);
+    const pickSet: Record<string, boolean> = {};
+    (picks ?? []).forEach((p) => { pickSet[p.child_id] = true; });
+    setParentPicks(pickSet);
   };
 
   useEffect(() => { load(); }, [user]);
@@ -266,7 +275,11 @@ function Dashboard() {
                 <div className="min-w-0">
                   <h3 className="text-xl font-bold">{c.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {todayCounts[c.id] ? `${todayCounts[c.id]} פריטים נבחרו היום ✓` : "טרם בחר היום"}
+                    {parentPicks[c.id]
+                      ? "💛 אבא בוחר היום"
+                      : todayCounts[c.id]
+                        ? `${todayCounts[c.id]} פריטים נבחרו היום ✓`
+                        : "טרם בחר היום"}
                   </p>
                 </div>
               </div>
@@ -278,8 +291,8 @@ function Dashboard() {
                 </div>
               )}
               <Link to="/app/kids" search={{ child: c.id } as never}>
-                <Button className="w-full rounded-xl" variant={todayCounts[c.id] ? "secondary" : "default"}>
-                  {todayCounts[c.id] ? "צפייה בקופסה" : "התחילו לבחור"}
+                <Button className="w-full rounded-xl" variant={todayCounts[c.id] || parentPicks[c.id] ? "secondary" : "default"}>
+                  {parentPicks[c.id] ? "אבא בוחר" : todayCounts[c.id] ? "צפייה בקופסה" : "התחילו לבחור"}
                 </Button>
               </Link>
             </Card>
