@@ -275,7 +275,11 @@ function Dashboard() {
                 <div className="min-w-0">
                   <h3 className="text-xl font-bold">{c.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {todayCounts[c.id] ? `${todayCounts[c.id]} פריטים נבחרו היום ✓` : "טרם בחר היום"}
+                    {parentPicks[c.id]
+                      ? "💛 אבא בוחר היום"
+                      : todayCounts[c.id]
+                        ? `${todayCounts[c.id]} פריטים נבחרו היום ✓`
+                        : "טרם בחר היום"}
                   </p>
                 </div>
               </div>
@@ -287,8 +291,8 @@ function Dashboard() {
                 </div>
               )}
               <Link to="/app/kids" search={{ child: c.id } as never}>
-                <Button className="w-full rounded-xl" variant={todayCounts[c.id] ? "secondary" : "default"}>
-                  {todayCounts[c.id] ? "צפייה בקופסה" : "התחילו לבחור"}
+                <Button className="w-full rounded-xl" variant={todayCounts[c.id] || parentPicks[c.id] ? "secondary" : "default"}>
+                  {parentPicks[c.id] ? "אבא בוחר" : todayCounts[c.id] ? "צפייה בקופסה" : "התחילו לבחור"}
                 </Button>
               </Link>
             </Card>
