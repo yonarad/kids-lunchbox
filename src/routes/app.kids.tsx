@@ -132,6 +132,7 @@ function KidsView() {
       .upsert({ household_id: hid, child_id: child.id, selection_date: today }, { onConflict: "child_id,selection_date" });
     if (error) { toast.error(error.message); return; }
     setSelectedIds([]);
+    setParentPick(true);
     setDone(true);
     toast.success("נהדר! אבא יבחר עבורך 💛");
   };
