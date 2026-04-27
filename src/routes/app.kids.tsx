@@ -80,9 +80,12 @@ function KidsView() {
       if (target) {
         const my = (sels ?? []).filter((s) => s.child_id === target!.id).map((s) => s.food_item_id);
         setSelectedIds(my);
-        if (my.length > 0) setDone(true);
+        const isParentPick = (ppicks ?? []).some((p) => p.child_id === target!.id);
+        setParentPick(isParentPick);
+        if (my.length > 0 || isParentPick) setDone(true);
       } else {
         setSelectedIds([]);
+        setParentPick(false);
         setDone(false);
       }
     })();
