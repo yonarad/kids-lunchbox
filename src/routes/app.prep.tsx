@@ -15,6 +15,7 @@ interface Row {
   child_name: string;
   child_emoji: string;
   child_color: string;
+  parent_pick: boolean;
   items: { name: string; emoji: string | null; image_url: string | null; category: string; category_emoji: string }[];
 }
 
