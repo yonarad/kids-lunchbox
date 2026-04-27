@@ -31,6 +31,7 @@ function KidsView() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [parentPick, setParentPick] = useState(false);
   const [today, setToday] = useState<string>(todayInIsrael(12));
 
   useEffect(() => {
