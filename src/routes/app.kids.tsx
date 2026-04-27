@@ -335,13 +335,23 @@ function KidsView() {
 }
 
 function BoxView({
-  child, items, selectedIds, onEdit, onRemove,
+  child, items, selectedIds, parentPick, onEdit, onRemove,
 }: {
   child: Child; items: FoodItem[];
-  selectedIds: string[]; onEdit: () => void;
+  selectedIds: string[]; parentPick: boolean; onEdit: () => void;
   onRemove: (itemId: string) => void;
 }) {
   const allSelectedItems = selectedIds.map((id) => items.find((i) => i.id === id)).filter(Boolean) as FoodItem[];
+  if (parentPick) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 pt-16 text-center">
+        <div className="text-7xl mb-4 animate-pop-in">💛</div>
+        <h1 className="text-3xl md:text-4xl mb-2">אבא יבחר עבור {child.name}</h1>
+        <p className="text-muted-foreground mb-6">סימנו שאבא יכין את הקופסה היום</p>
+        <Button variant="secondary" onClick={onEdit} className="rounded-2xl">בכל זאת אבחר בעצמי</Button>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 pt-16">
       <h1 className="text-3xl md:text-4xl mb-2">הקופסה של {child.name} מוכנה! 🎉</h1>
