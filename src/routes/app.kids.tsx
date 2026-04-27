@@ -208,7 +208,7 @@ function KidsView() {
     toast.success("הוסר מהקופסה");
   };
 
-  if (done) return <BoxView child={child} items={items} selectedIds={selectedIds} onEdit={() => setDone(false)} onRemove={removeItem} />;
+  if (done) return <BoxView child={child} items={items} selectedIds={selectedIds} parentPick={parentPick} onEdit={() => setDone(false)} onRemove={removeItem} />;
 
   const activeCategory = cats.find((c) => c.id === activeCat);
   const activeItems = activeCat ? itemsForCat(activeCat) : [];
