@@ -31,6 +31,7 @@ function KidsView() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [parentPick, setParentPick] = useState(false);
   const [today, setToday] = useState<string>(todayInIsrael(12));
 
   useEffect(() => {
@@ -42,12 +43,13 @@ function KidsView() {
       const resetHour = await getResetHour(id);
       const t = todayInIsrael(resetHour);
       setToday(t);
-      const [{ data: kids }, { data: c }, { data: f }, { data: sels }, { data: fic }] = await Promise.all([
+      const [{ data: kids }, { data: c }, { data: f }, { data: sels }, { data: fic }, { data: ppicks }] = await Promise.all([
         supabase.from("children").select("*").eq("household_id", id).order("created_at"),
         supabase.from("categories").select("*").eq("household_id", id).order("sort_order"),
         supabase.from("food_items").select("*").eq("household_id", id).eq("is_active", true),
         supabase.from("selections").select("*").eq("household_id", id).eq("selection_date", t),
         supabase.from("food_item_categories").select("food_item_id, category_id").eq("household_id", id),
+        supabase.from("parent_picks").select("child_id").eq("household_id", id).eq("selection_date", t),
       ]);
 
       // If this user is a child themselves, restrict to that child only
@@ -78,9 +80,12 @@ function KidsView() {
       if (target) {
         const my = (sels ?? []).filter((s) => s.child_id === target!.id).map((s) => s.food_item_id);
         setSelectedIds(my);
-        if (my.length > 0) setDone(true);
+        const isParentPick = (ppicks ?? []).some((p) => p.child_id === target!.id);
+        setParentPick(isParentPick);
+        if (my.length > 0 || isParentPick) setDone(true);
       } else {
         setSelectedIds([]);
+        setParentPick(false);
         setDone(false);
       }
     })();
@@ -117,27 +122,26 @@ function KidsView() {
     void cat;
   };
 
-  const surpriseMe = () => {
-    const newSel: string[] = [];
-    const counts: Record<string, number> = {};
-    for (const cat of cats) {
-      const pool = itemsForCat(cat.id).filter((i) => !newSel.includes(i.id));
-      const shuffled = [...pool].sort(() => Math.random() - 0.5);
-      for (const it of shuffled) {
-        const itCats = itemCats[it.id] ?? [cat.id];
-        if (itCats.some((cid) => (counts[cid] ?? 0) >= (cats.find((c) => c.id === cid)?.max_selections ?? 1))) continue;
-        newSel.push(it.id);
-        for (const cid of itCats) counts[cid] = (counts[cid] ?? 0) + 1;
-        if ((counts[cat.id] ?? 0) >= cat.max_selections) break;
-      }
-    }
-    setSelectedIds(newSel);
-    toast.success("אבא בחר בשבילך! 🎲");
+  const askParentToChoose = async () => {
+    if (!child || !hid) return;
+    // Clear any existing selections for today
+    await supabase.from("selections").delete().eq("household_id", hid).eq("child_id", child.id).eq("selection_date", today);
+    // Mark that the parent will choose
+    const { error } = await supabase
+      .from("parent_picks")
+      .upsert({ household_id: hid, child_id: child.id, selection_date: today }, { onConflict: "child_id,selection_date" });
+    if (error) { toast.error(error.message); return; }
+    setSelectedIds([]);
+    setParentPick(true);
+    setDone(true);
+    toast.success("נהדר! אבא יבחר עבורך 💛");
   };
 
   const finish = async () => {
     if (!child || !hid) return;
     await supabase.from("selections").delete().eq("household_id", hid).eq("child_id", child.id).eq("selection_date", today);
+    // Remove any "parent picks" marker since the child is choosing themselves
+    await supabase.from("parent_picks").delete().eq("household_id", hid).eq("child_id", child.id).eq("selection_date", today);
     const rows = selectedIds.map((itemId) => ({
       household_id: hid, child_id: child.id, food_item_id: itemId, selection_date: today,
     }));
@@ -145,6 +149,7 @@ function KidsView() {
       const { error } = await supabase.from("selections").insert(rows);
       if (error) { toast.error(error.message); return; }
     }
+    setParentPick(false);
     setDone(true);
     toast.success("יששש! הקופסה מוכנה 🎉");
   };
@@ -203,7 +208,7 @@ function KidsView() {
     toast.success("הוסר מהקופסה");
   };
 
-  if (done) return <BoxView child={child} items={items} selectedIds={selectedIds} onEdit={() => setDone(false)} onRemove={removeItem} />;
+  if (done) return <BoxView child={child} items={items} selectedIds={selectedIds} parentPick={parentPick} onEdit={() => setDone(false)} onRemove={removeItem} />;
 
   const activeCategory = cats.find((c) => c.id === activeCat);
   const activeItems = activeCat ? itemsForCat(activeCat) : [];
@@ -316,7 +321,7 @@ function KidsView() {
       {/* Bottom actions */}
       <div className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur border-t shadow-pop p-3 z-30">
         <div className="max-w-5xl mx-auto flex gap-2">
-          <Button variant="secondary" size="lg" onClick={surpriseMe} className="rounded-2xl flex-1">
+          <Button variant="secondary" size="lg" onClick={askParentToChoose} className="rounded-2xl flex-1">
             <Sparkles className="w-5 h-5 ml-2" /> אבא בוחר בשבילי
           </Button>
           <Button size="lg" onClick={finish} disabled={totalSelected === 0} className="rounded-2xl flex-1 shadow-pop">
@@ -330,13 +335,23 @@ function KidsView() {
 }
 
 function BoxView({
-  child, items, selectedIds, onEdit, onRemove,
+  child, items, selectedIds, parentPick, onEdit, onRemove,
 }: {
   child: Child; items: FoodItem[];
-  selectedIds: string[]; onEdit: () => void;
+  selectedIds: string[]; parentPick: boolean; onEdit: () => void;
   onRemove: (itemId: string) => void;
 }) {
   const allSelectedItems = selectedIds.map((id) => items.find((i) => i.id === id)).filter(Boolean) as FoodItem[];
+  if (parentPick) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 pt-16 text-center">
+        <div className="text-7xl mb-4 animate-pop-in">💛</div>
+        <h1 className="text-3xl md:text-4xl mb-2">אבא יבחר עבור {child.name}</h1>
+        <p className="text-muted-foreground mb-6">סימנו שאבא יכין את הקופסה היום</p>
+        <Button variant="secondary" onClick={onEdit} className="rounded-2xl">בכל זאת אבחר בעצמי</Button>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 pt-16">
       <h1 className="text-3xl md:text-4xl mb-2">הקופסה של {child.name} מוכנה! 🎉</h1>

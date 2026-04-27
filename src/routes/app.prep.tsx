@@ -15,6 +15,7 @@ interface Row {
   child_name: string;
   child_emoji: string;
   child_color: string;
+  parent_pick: boolean;
   items: { name: string; emoji: string | null; image_url: string | null; category: string; category_emoji: string }[];
 }
 
@@ -58,16 +59,25 @@ function PrepList() {
     const resetHour = await getResetHour(hid);
     const t = todayInIsrael(resetHour);
     setToday(t);
-    const { data: selections } = await supabase
-      .from("selections")
-      .select("child_id, food_item_id")
-      .eq("household_id", hid)
-      .eq("selection_date", t);
+    const [{ data: selections }, { data: parentPicks }] = await Promise.all([
+      supabase
+        .from("selections")
+        .select("child_id, food_item_id")
+        .eq("household_id", hid)
+        .eq("selection_date", t),
+      supabase
+        .from("parent_picks")
+        .select("child_id")
+        .eq("household_id", hid)
+        .eq("selection_date", t),
+    ]);
 
-    const childIds = [...new Set((selections ?? []).map((s) => s.child_id))];
+    const selChildIds = [...new Set((selections ?? []).map((s) => s.child_id))];
+    const ppChildIds = [...new Set((parentPicks ?? []).map((p) => p.child_id))];
+    const childIds = [...new Set([...selChildIds, ...ppChildIds])];
     const itemIds = [...new Set((selections ?? []).map((s) => s.food_item_id))];
 
-    if (childIds.length === 0 || itemIds.length === 0) {
+    if (childIds.length === 0) {
       setRows([]);
       setLoading(false);
       return;
@@ -75,7 +85,9 @@ function PrepList() {
 
     const [{ data: children }, { data: items }] = await Promise.all([
       supabase.from("children").select("id,name,avatar_emoji,avatar_color").in("id", childIds),
-      supabase.from("food_items").select("id,name,emoji,image_url,category_id").in("id", itemIds),
+      itemIds.length > 0
+        ? supabase.from("food_items").select("id,name,emoji,image_url,category_id").in("id", itemIds)
+        : Promise.resolve({ data: [] as FoodRow[] }),
     ]);
 
     const categoryIds = [...new Set((items ?? []).map((it) => it.category_id))];
@@ -86,8 +98,15 @@ function PrepList() {
     const childrenById = new Map((children as ChildRow[] | null ?? []).map((c) => [c.id, c]));
     const itemsById = new Map((items as FoodRow[] | null ?? []).map((it) => [it.id, it]));
     const categoriesById = new Map((categories as CategoryRow[] | null ?? []).map((c) => [c.id, c]));
+    const parentPickSet = new Set(ppChildIds);
 
     const grouped = new Map<string, Row>();
+    // Seed parent-pick children first (so they appear even with no selections)
+    for (const cid of ppChildIds) {
+      const c = childrenById.get(cid);
+      if (!c) continue;
+      grouped.set(cid, { child_name: c.name, child_emoji: c.avatar_emoji, child_color: c.avatar_color, parent_pick: true, items: [] });
+    }
     for (const s of (selections as SelectionRow[] | null ?? [])) {
       const c = childrenById.get(s.child_id);
       const it = itemsById.get(s.food_item_id);
@@ -95,7 +114,7 @@ function PrepList() {
       const category = categoriesById.get(it.category_id);
       const key = c.id;
       if (!grouped.has(key)) {
-        grouped.set(key, { child_name: c.name, child_emoji: c.avatar_emoji, child_color: c.avatar_color, items: [] });
+        grouped.set(key, { child_name: c.name, child_emoji: c.avatar_emoji, child_color: c.avatar_color, parent_pick: parentPickSet.has(c.id), items: [] });
       }
       grouped.get(key)!.items.push({ name: it.name, emoji: it.emoji, image_url: it.image_url ?? null, category: category?.name ?? "", category_emoji: category?.emoji ?? "" });
     }
@@ -128,29 +147,40 @@ function PrepList() {
         </Card>
       ) : (
         rows.map((r) => (
-          <Card key={r.child_name} className="p-5 shadow-card">
+          <Card key={r.child_name} className={`p-5 shadow-card ${r.parent_pick ? "border-2 border-primary/40 bg-primary/5" : ""}`}>
             <div className="flex items-center gap-3 mb-3 pb-3 border-b">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ backgroundColor: r.child_color }}>
                 {r.child_emoji}
               </div>
               <h2 className="text-xl font-bold">{r.child_name}</h2>
-              <span className="text-sm text-muted-foreground mr-auto">{r.items.length} פריטים</span>
+              {r.parent_pick ? (
+                <span className="text-sm font-bold text-primary mr-auto">💛 אבא בוחר</span>
+              ) : (
+                <span className="text-sm text-muted-foreground mr-auto">{r.items.length} פריטים</span>
+              )}
             </div>
-            <ul className="space-y-2">
-              {r.items.map((it, i) => (
-                <li key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50">
-                  {it.image_url ? (
-                    <img src={it.image_url} alt={it.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
-                  ) : (
-                    <span className="text-2xl">{it.emoji ?? it.category_emoji}</span>
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium">{it.name}</p>
-                    <p className="text-xs text-muted-foreground">{it.category}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {r.parent_pick && r.items.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-base font-medium">תכין/י את הקופסה בעצמך 🍱</p>
+                <p className="text-sm text-muted-foreground mt-1">{r.child_name} ביקש/ה שאבא יבחר</p>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {r.items.map((it, i) => (
+                  <li key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50">
+                    {it.image_url ? (
+                      <img src={it.image_url} alt={it.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
+                    ) : (
+                      <span className="text-2xl">{it.emoji ?? it.category_emoji}</span>
+                    )}
+                    <div className="flex-1">
+                      <p className="font-medium">{it.name}</p>
+                      <p className="text-xs text-muted-foreground">{it.category}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
         ))
       )}

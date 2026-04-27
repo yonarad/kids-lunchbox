@@ -268,6 +268,45 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_picks: {
+        Row: {
+          child_id: string
+          created_at: string
+          household_id: string
+          id: string
+          selection_date: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          household_id: string
+          id?: string
+          selection_date?: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          household_id?: string
+          id?: string
+          selection_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_picks_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_picks_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
