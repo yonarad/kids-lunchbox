@@ -59,6 +59,14 @@ function Dashboard() {
     const counts: Record<string, number> = {};
     (sels ?? []).forEach((s) => { counts[s.child_id] = (counts[s.child_id] ?? 0) + 1; });
     setTodayCounts(counts);
+    const { data: picks } = await supabase
+      .from("parent_picks")
+      .select("child_id")
+      .eq("household_id", hid)
+      .eq("selection_date", today);
+    const pickSet: Record<string, boolean> = {};
+    (picks ?? []).forEach((p) => { pickSet[p.child_id] = true; });
+    setParentPicks(pickSet);
   };
 
   useEffect(() => { load(); }, [user]);
