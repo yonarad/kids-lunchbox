@@ -314,7 +314,7 @@ function KidsView() {
       {/* Bottom actions */}
       <div className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur border-t shadow-pop p-3 z-30">
         <div className="max-w-5xl mx-auto flex gap-2">
-          <Button variant="secondary" size="lg" onClick={surpriseMe} className="rounded-2xl flex-1">
+          <Button variant="secondary" size="lg" onClick={askParentToChoose} className="rounded-2xl flex-1">
             <Sparkles className="w-5 h-5 ml-2" /> אבא בוחר בשבילי
           </Button>
           <Button size="lg" onClick={finish} disabled={totalSelected === 0} className="rounded-2xl flex-1 shadow-pop">
