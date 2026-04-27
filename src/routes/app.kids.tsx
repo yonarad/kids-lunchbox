@@ -43,12 +43,13 @@ function KidsView() {
       const resetHour = await getResetHour(id);
       const t = todayInIsrael(resetHour);
       setToday(t);
-      const [{ data: kids }, { data: c }, { data: f }, { data: sels }, { data: fic }] = await Promise.all([
+      const [{ data: kids }, { data: c }, { data: f }, { data: sels }, { data: fic }, { data: ppicks }] = await Promise.all([
         supabase.from("children").select("*").eq("household_id", id).order("created_at"),
         supabase.from("categories").select("*").eq("household_id", id).order("sort_order"),
         supabase.from("food_items").select("*").eq("household_id", id).eq("is_active", true),
         supabase.from("selections").select("*").eq("household_id", id).eq("selection_date", t),
         supabase.from("food_item_categories").select("food_item_id, category_id").eq("household_id", id),
+        supabase.from("parent_picks").select("child_id").eq("household_id", id).eq("selection_date", t),
       ]);
 
       // If this user is a child themselves, restrict to that child only
