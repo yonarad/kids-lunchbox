@@ -117,22 +117,18 @@ function KidsView() {
     void cat;
   };
 
-  const surpriseMe = () => {
-    const newSel: string[] = [];
-    const counts: Record<string, number> = {};
-    for (const cat of cats) {
-      const pool = itemsForCat(cat.id).filter((i) => !newSel.includes(i.id));
-      const shuffled = [...pool].sort(() => Math.random() - 0.5);
-      for (const it of shuffled) {
-        const itCats = itemCats[it.id] ?? [cat.id];
-        if (itCats.some((cid) => (counts[cid] ?? 0) >= (cats.find((c) => c.id === cid)?.max_selections ?? 1))) continue;
-        newSel.push(it.id);
-        for (const cid of itCats) counts[cid] = (counts[cid] ?? 0) + 1;
-        if ((counts[cat.id] ?? 0) >= cat.max_selections) break;
-      }
-    }
-    setSelectedIds(newSel);
-    toast.success("אבא בחר בשבילך! 🎲");
+  const askParentToChoose = async () => {
+    if (!child || !hid) return;
+    // Clear any existing selections for today
+    await supabase.from("selections").delete().eq("household_id", hid).eq("child_id", child.id).eq("selection_date", today);
+    // Mark that the parent will choose
+    const { error } = await supabase
+      .from("parent_picks")
+      .upsert({ household_id: hid, child_id: child.id, selection_date: today }, { onConflict: "child_id,selection_date" });
+    if (error) { toast.error(error.message); return; }
+    setSelectedIds([]);
+    setDone(true);
+    toast.success("נהדר! אבא יבחר עבורך 💛");
   };
 
   const finish = async () => {
