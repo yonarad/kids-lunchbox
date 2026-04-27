@@ -147,29 +147,40 @@ function PrepList() {
         </Card>
       ) : (
         rows.map((r) => (
-          <Card key={r.child_name} className="p-5 shadow-card">
+          <Card key={r.child_name} className={`p-5 shadow-card ${r.parent_pick ? "border-2 border-primary/40 bg-primary/5" : ""}`}>
             <div className="flex items-center gap-3 mb-3 pb-3 border-b">
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{ backgroundColor: r.child_color }}>
                 {r.child_emoji}
               </div>
               <h2 className="text-xl font-bold">{r.child_name}</h2>
-              <span className="text-sm text-muted-foreground mr-auto">{r.items.length} פריטים</span>
+              {r.parent_pick ? (
+                <span className="text-sm font-bold text-primary mr-auto">💛 אבא בוחר</span>
+              ) : (
+                <span className="text-sm text-muted-foreground mr-auto">{r.items.length} פריטים</span>
+              )}
             </div>
-            <ul className="space-y-2">
-              {r.items.map((it, i) => (
-                <li key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50">
-                  {it.image_url ? (
-                    <img src={it.image_url} alt={it.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
-                  ) : (
-                    <span className="text-2xl">{it.emoji ?? it.category_emoji}</span>
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium">{it.name}</p>
-                    <p className="text-xs text-muted-foreground">{it.category}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {r.parent_pick && r.items.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-base font-medium">תכין/י את הקופסה בעצמך 🍱</p>
+                <p className="text-sm text-muted-foreground mt-1">{r.child_name} ביקש/ה שאבא יבחר</p>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {r.items.map((it, i) => (
+                  <li key={i} className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50">
+                    {it.image_url ? (
+                      <img src={it.image_url} alt={it.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
+                    ) : (
+                      <span className="text-2xl">{it.emoji ?? it.category_emoji}</span>
+                    )}
+                    <div className="flex-1">
+                      <p className="font-medium">{it.name}</p>
+                      <p className="text-xs text-muted-foreground">{it.category}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
         ))
       )}
