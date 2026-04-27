@@ -149,6 +149,7 @@ function KidsView() {
       const { error } = await supabase.from("selections").insert(rows);
       if (error) { toast.error(error.message); return; }
     }
+    setParentPick(false);
     setDone(true);
     toast.success("יששש! הקופסה מוכנה 🎉");
   };
