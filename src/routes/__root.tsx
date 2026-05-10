@@ -86,6 +86,7 @@ function RootComponent() {
     <AuthProvider>
       <Outlet />
       <Toaster richColors position="top-center" />
+      <InstallPrompt />
     </AuthProvider>
   );
 }
