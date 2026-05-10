@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 import appCss from "../styles.css?url";
 
@@ -33,6 +34,10 @@ export const Route = createRootRoute({
       { title: "קופסת האוכל שלי" },
       { name: "description", content: "אפליקציה משחקית לבחירת תוכן קופסת האוכל של הילדים" },
       { name: "theme-color", content: "#FF8A65" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "קופסת האוכל" },
       { property: "og:title", content: "קופסת האוכל שלי" },
       { property: "og:description", content: "אפליקציה משחקית לבחירת תוכן קופסת האוכל של הילדים" },
       { property: "og:type", content: "website" },
@@ -44,6 +49,11 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.json" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -76,6 +86,7 @@ function RootComponent() {
     <AuthProvider>
       <Outlet />
       <Toaster richColors position="top-center" />
+      <InstallPrompt />
     </AuthProvider>
   );
 }
