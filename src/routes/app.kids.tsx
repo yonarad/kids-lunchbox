@@ -142,11 +142,12 @@ function KidsView() {
     await supabase.from("selections").delete().eq("household_id", hid).eq("child_id", child.id).eq("selection_date", today);
     // Remove any "parent picks" marker since the child is choosing themselves
     await supabase.from("parent_picks").delete().eq("household_id", hid).eq("child_id", child.id).eq("selection_date", today);
-    const rows = selectedIds.map((itemId) => ({
+    const uniqueIds = Array.from(new Set(selectedIds));
+    const rows = uniqueIds.map((itemId) => ({
       household_id: hid, child_id: child.id, food_item_id: itemId, selection_date: today,
     }));
     if (rows.length > 0) {
-      const { error } = await supabase.from("selections").insert(rows);
+      const { error } = await supabase.from("selections").upsert(rows, { onConflict: "child_id,food_item_id,selection_date", ignoreDuplicates: true });
       if (error) { toast.error(error.message); return; }
     }
     setParentPick(false);
