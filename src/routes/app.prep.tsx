@@ -66,6 +66,7 @@ function PrepList() {
   const [today, setToday] = useState<string>(todayInIsrael(12));
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
+  const [expandOverride, setExpandOverride] = useState<Set<string>>(new Set());
 
   // Load prepared state from localStorage when household/date is known
   useEffect(() => {
