@@ -6,7 +6,7 @@ import { getMyHouseholdId, todayInIsrael, getResetHour, formatHebrewDate } from 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Printer, RefreshCw, CheckCheck, RotateCcw } from "lucide-react";
+import { Printer, RefreshCw, CheckCheck, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 
 export const Route = createFileRoute("/app/prep")({
   component: PrepList,
@@ -66,6 +66,7 @@ function PrepList() {
   const [today, setToday] = useState<string>(todayInIsrael(12));
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
+  const [expandOverride, setExpandOverride] = useState<Set<string>>(new Set());
 
   // Load prepared state from localStorage when household/date is known
   useEffect(() => {
@@ -232,9 +233,17 @@ function PrepList() {
       ) : (
         rows.map((r) => {
           const allDone = isChildFullyDone(r);
+          const forcedOpen = expandOverride.has(r.child_id);
+          const collapsed = allDone && !forcedOpen;
+          const toggleCollapsed = () => {
+            const next = new Set(expandOverride);
+            if (next.has(r.child_id)) next.delete(r.child_id);
+            else next.add(r.child_id);
+            setExpandOverride(next);
+          };
           return (
             <Card key={r.child_id} className={`p-5 shadow-card transition-opacity ${r.parent_pick ? "border-2 border-primary/40 bg-primary/5" : ""} ${allDone ? "opacity-70" : ""}`}>
-              <div className="flex items-center gap-3 mb-3 pb-3 border-b">
+              <div className={`flex items-center gap-3 ${collapsed ? "" : "mb-3 pb-3 border-b"}`}>
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0" style={{ backgroundColor: r.child_color }}>
                   {r.child_emoji}
                 </div>
@@ -249,39 +258,60 @@ function PrepList() {
                     <span className="text-sm text-muted-foreground">{r.items.length} פריטים</span>
                   )}
                 </div>
-                <Button
-                  variant={allDone ? "ghost" : "secondary"}
-                  size="sm"
-                  className="print:hidden shrink-0"
-                  onClick={() => setAllForChild(r, !allDone)}
-                >
-                  {allDone ? (<><RotateCcw className="w-4 h-4 ml-1" /> בטל</>) : (<><CheckCheck className="w-4 h-4 ml-1" /> סמן הכל</>)}
-                </Button>
+                {allDone ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="print:hidden shrink-0"
+                    onClick={toggleCollapsed}
+                    aria-label={collapsed ? "הרחב" : "כווץ"}
+                  >
+                    {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="print:hidden shrink-0"
+                    onClick={() => setAllForChild(r, true)}
+                  >
+                    <CheckCheck className="w-4 h-4 ml-1" /> סמן הכל
+                  </Button>
+                )}
               </div>
-              {r.parent_pick && r.items.length === 0 ? (
-                <label className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-secondary/50">
-                  <Checkbox
-                    checked={done.has(itemKey(r.child_id, "parent-pick"))}
-                    onCheckedChange={() => toggleItem(r.child_id, "parent-pick")}
-                    className="print:hidden"
-                  />
-                  <div className="flex-1 text-center">
-                    <p className="text-base font-medium">תכין/י את הקופסה בעצמך 🍱</p>
-                    <p className="text-sm text-muted-foreground mt-1">{r.child_name} ביקש/ה שאבא יבחר</p>
-                  </div>
-                </label>
-              ) : (
-                <ul className="space-y-2">
-                  {r.items.map((it) => {
-                    const checked = done.has(itemKey(r.child_id, it.id));
-                    return (
-                      <li key={it.id}>
-                        <label className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-secondary/50 ${checked ? "opacity-60" : ""}`}>
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={() => toggleItem(r.child_id, it.id)}
-                            className="print:hidden"
-                          />
+              {collapsed ? null : (
+                <>
+                  {allDone && (
+                    <div className="flex justify-end mb-2 print:hidden">
+                      <Button variant="ghost" size="sm" onClick={() => setAllForChild(r, false)}>
+                        <RotateCcw className="w-4 h-4 ml-1" /> בטל סימון
+                      </Button>
+                    </div>
+                  )}
+                  {r.parent_pick && r.items.length === 0 ? (
+                    <label className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-secondary/50">
+                      <Checkbox
+                        checked={done.has(itemKey(r.child_id, "parent-pick"))}
+                        onCheckedChange={() => toggleItem(r.child_id, "parent-pick")}
+                        className="print:hidden"
+                      />
+                      <div className="flex-1 text-center">
+                        <p className="text-base font-medium">תכין/י את הקופסה בעצמך 🍱</p>
+                        <p className="text-sm text-muted-foreground mt-1">{r.child_name} ביקש/ה שאבא יבחר</p>
+                      </div>
+                    </label>
+                  ) : (
+                    <ul className="space-y-2">
+                      {r.items.map((it) => {
+                        const checked = done.has(itemKey(r.child_id, it.id));
+                        return (
+                          <li key={it.id}>
+                            <label className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-secondary/50 ${checked ? "opacity-60" : ""}`}>
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() => toggleItem(r.child_id, it.id)}
+                                className="print:hidden"
+                              />
                           {it.image_url ? (
                             <img src={it.image_url} alt={it.name} className="w-9 h-9 rounded-lg object-cover shrink-0" />
                           ) : (
@@ -295,7 +325,9 @@ function PrepList() {
                       </li>
                     );
                   })}
-                </ul>
+                    </ul>
+                  )}
+                </>
               )}
             </Card>
           );
