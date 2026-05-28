@@ -6,7 +6,7 @@ import { getMyHouseholdId, todayInIsrael, getResetHour, formatHebrewDate } from 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Printer, RefreshCw, CheckCheck, RotateCcw } from "lucide-react";
+import { Printer, RefreshCw, CheckCheck, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 
 export const Route = createFileRoute("/app/prep")({
   component: PrepList,
