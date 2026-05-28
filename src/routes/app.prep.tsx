@@ -325,7 +325,9 @@ function PrepList() {
                       </li>
                     );
                   })}
-                </ul>
+                    </ul>
+                  )}
+                </>
               )}
             </Card>
           );
