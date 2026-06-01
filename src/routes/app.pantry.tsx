@@ -80,6 +80,26 @@ function Pantry() {
     load();
   };
 
+
+  const moveCat = async (cat: Category, dir: -1 | 1) => {
+    const sorted = [...cats].sort((a, b) => a.sort_order - b.sort_order);
+    const idx = sorted.findIndex((c) => c.id === cat.id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+    const other = sorted[swapIdx];
+    // optimistic
+    setCats((prev) => prev.map((c) => {
+      if (c.id === cat.id) return { ...c, sort_order: other.sort_order };
+      if (c.id === other.id) return { ...c, sort_order: cat.sort_order };
+      return c;
+    }));
+    await Promise.all([
+      supabase.from("categories").update({ sort_order: other.sort_order }).eq("id", cat.id),
+      supabase.from("categories").update({ sort_order: cat.sort_order }).eq("id", other.id),
+    ]);
+    load();
+  };
+
   const openNewItem = (categoryId: string) => {
     setItemDialog({ open: true, categoryId, editing: null });
     setItemName(""); setItemEmoji("🍎"); setItemImage(null);
