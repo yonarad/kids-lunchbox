@@ -194,7 +194,11 @@ function Pantry() {
                     <p className="text-xs text-muted-foreground">מותר לבחור עד {cat.max_selections} פריטים</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <div className="flex flex-col -gap-1">
+                    <button onClick={() => moveCat(cat, -1)} disabled={cats.indexOf(cat) === 0} className="p-0.5 hover:bg-secondary rounded disabled:opacity-30" aria-label="העלאה"><ChevronUp className="w-4 h-4" /></button>
+                    <button onClick={() => moveCat(cat, 1)} disabled={cats.indexOf(cat) === cats.length - 1} className="p-0.5 hover:bg-secondary rounded disabled:opacity-30" aria-label="הורדה"><ChevronDown className="w-4 h-4" /></button>
+                  </div>
                   <Button size="sm" variant="ghost" onClick={() => openEditCat(cat)}><Pencil className="w-4 h-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => removeCat(cat.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   <Button size="sm" onClick={() => openNewItem(cat.id)} className="rounded-xl"><Plus className="w-4 h-4 ml-1" /> פריט</Button>
