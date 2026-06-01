@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Pencil, Image as ImageIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/pantry")({
