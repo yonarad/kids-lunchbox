@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Pencil, Image as ImageIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/pantry")({
@@ -77,6 +77,26 @@ function Pantry() {
   const removeCat = async (id: string) => {
     if (!confirm("למחוק את הקטגוריה וכל המנות שבתוכה?")) return;
     await supabase.from("categories").delete().eq("id", id);
+    load();
+  };
+
+
+  const moveCat = async (cat: Category, dir: -1 | 1) => {
+    const sorted = [...cats].sort((a, b) => a.sort_order - b.sort_order);
+    const idx = sorted.findIndex((c) => c.id === cat.id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= sorted.length) return;
+    const other = sorted[swapIdx];
+    // optimistic
+    setCats((prev) => prev.map((c) => {
+      if (c.id === cat.id) return { ...c, sort_order: other.sort_order };
+      if (c.id === other.id) return { ...c, sort_order: cat.sort_order };
+      return c;
+    }));
+    await Promise.all([
+      supabase.from("categories").update({ sort_order: other.sort_order }).eq("id", cat.id),
+      supabase.from("categories").update({ sort_order: cat.sort_order }).eq("id", other.id),
+    ]);
     load();
   };
 
@@ -174,7 +194,11 @@ function Pantry() {
                     <p className="text-xs text-muted-foreground">מותר לבחור עד {cat.max_selections} פריטים</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <div className="flex flex-col -gap-1">
+                    <button onClick={() => moveCat(cat, -1)} disabled={cats.indexOf(cat) === 0} className="p-0.5 hover:bg-secondary rounded disabled:opacity-30" aria-label="העלאה"><ChevronUp className="w-4 h-4" /></button>
+                    <button onClick={() => moveCat(cat, 1)} disabled={cats.indexOf(cat) === cats.length - 1} className="p-0.5 hover:bg-secondary rounded disabled:opacity-30" aria-label="הורדה"><ChevronDown className="w-4 h-4" /></button>
+                  </div>
                   <Button size="sm" variant="ghost" onClick={() => openEditCat(cat)}><Pencil className="w-4 h-4" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => removeCat(cat.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   <Button size="sm" onClick={() => openNewItem(cat.id)} className="rounded-xl"><Plus className="w-4 h-4 ml-1" /> פריט</Button>
