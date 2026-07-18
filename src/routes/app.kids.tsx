@@ -4,6 +4,17 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyHouseholdId, todayInIsrael, getResetHour } from "@/lib/household";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Sparkles, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,6 +43,7 @@ function KidsView() {
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [parentPick, setParentPick] = useState(false);
+  const [parentPickDialogOpen, setParentPickDialogOpen] = useState(false);
   const [today, setToday] = useState<string>(todayInIsrael(12));
 
   useEffect(() => {
@@ -322,9 +334,43 @@ function KidsView() {
       {/* Bottom actions */}
       <div className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur border-t shadow-pop p-3 z-30">
         <div className="max-w-5xl mx-auto flex gap-2">
-          <Button variant="secondary" size="lg" onClick={askParentToChoose} className="rounded-2xl flex-1">
-            <Sparkles className="w-5 h-5 ml-2" /> אבא בוחר בשבילי
-          </Button>
+          <AlertDialog open={parentPickDialogOpen} onOpenChange={setParentPickDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => {
+                  if (selectedIds.length > 0) {
+                    setParentPickDialogOpen(true);
+                  } else {
+                    askParentToChoose();
+                  }
+                }}
+                className="rounded-2xl flex-1"
+              >
+                <Sparkles className="w-5 h-5 ml-2" /> אבא בוחר בשבילי
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>לתת לאבא לבחור?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  יש לך כבר {totalSelected} פריטים בקופסה. האם אתה בטוח שאתה רוצה שאבא יבחר במקומך? הבחירה הקיימת תימחק.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setParentPickDialogOpen(false)}>ביטול</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    askParentToChoose();
+                    setParentPickDialogOpen(false);
+                  }}
+                >
+                  כן, אבא יבחר
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button size="lg" onClick={finish} disabled={totalSelected === 0} className="rounded-2xl flex-1 shadow-pop">
             סיימתי! ({totalSelected}) 🎉
           </Button>
