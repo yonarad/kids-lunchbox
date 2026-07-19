@@ -417,14 +417,29 @@ function BoxView({
                 ) : (
                   <span className="text-6xl">{it.emoji}</span>
                 )}
-                <button
-                  type="button"
-                  onClick={() => onRemove(it.id)}
-                  aria-label={`הסר ${it.name}`}
-                  className="absolute top-1 left-1 bg-destructive text-destructive-foreground rounded-full w-7 h-7 flex items-center justify-center shadow-pop hover:scale-110 active:scale-95 transition-transform"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={`הסר ${it.name}`}
+                      className="absolute top-1 left-1 bg-destructive text-destructive-foreground rounded-full w-7 h-7 flex items-center justify-center shadow-pop hover:scale-110 active:scale-95 transition-transform"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>להסיר את הפריט?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        הפריט "{it.name}" יוסר מהקופסה של {child.name}. פעולה זו לא ניתנת לביטול.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>ביטול</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onRemove(it.id)}>כן, להסיר</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ))
           )}
