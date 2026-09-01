@@ -229,6 +229,9 @@ function Pantry() {
                             גם ב: {otherCats.map((cid) => cats.find((c) => c.id === cid)?.emoji).filter(Boolean).join(" ")}
                           </p>
                         )}
+                        {it.weekly_limit != null && (
+                          <p className="text-[10px] text-primary text-center truncate mt-0.5">עד {it.weekly_limit} בשבוע</p>
+                        )}
                         <div className="flex items-center justify-between mt-2 gap-2">
                           <Switch checked={it.is_active} onCheckedChange={() => toggleActive(it)} className="shrink-0" />
                           <div className="flex gap-1">
@@ -299,6 +302,17 @@ function Pantry() {
                   );
                 })}
               </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium block mb-1">מקסימום פעמים בשבוע (ראשון–שבת, אופציונלי)</label>
+              <Input
+                type="number"
+                min={1}
+                max={7}
+                placeholder="ללא הגבלה"
+                value={itemWeeklyLimit}
+                onChange={(e) => setItemWeeklyLimit(e.target.value)}
+              />
             </div>
             <div>
               <label className="text-sm font-medium block mb-2">תמונה (אופציונלי)</label>
