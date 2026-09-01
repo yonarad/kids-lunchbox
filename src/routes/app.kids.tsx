@@ -152,6 +152,12 @@ function KidsView() {
         return;
       }
     }
+    // Check the weekly limit of this item
+    const item = items.find((i) => i.id === itemId);
+    if (item?.weekly_limit != null && (weeklyCounts[itemId] ?? 0) >= item.weekly_limit) {
+      toast.error(`אפשר לבחור את "${item.name}" רק ${item.weekly_limit} פעמים בשבוע`);
+      return;
+    }
     setSelectedIds([...selectedIds, itemId]);
     void cat;
   };
@@ -309,10 +315,11 @@ function KidsView() {
               const otherCats = (itemCats[it.id] ?? []).filter((cid) => cid !== activeCat);
               // Disabled if not selected AND any of its categories has reached max
               const itemCatIds = itemCats[it.id] ?? [it.category_id];
-              const isDisabled = !isSel && itemCatIds.some((cid) => {
+              const weeklyReached = it.weekly_limit != null && (weeklyCounts[it.id] ?? 0) >= it.weekly_limit;
+              const isDisabled = !isSel && (weeklyReached || itemCatIds.some((cid) => {
                 const c = cats.find((x) => x.id === cid);
                 return c ? countForCat(cid) >= c.max_selections : false;
-              });
+              }));
               return (
                 <button
                   key={it.id}
