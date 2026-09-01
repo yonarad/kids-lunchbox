@@ -25,7 +25,18 @@ export const Route = createFileRoute("/app/kids")({
 
 interface Child { id: string; name: string; avatar_color: string; avatar_emoji: string }
 interface Category { id: string; name: string; emoji: string; color: string; max_selections: number; sort_order: number }
-interface FoodItem { id: string; category_id: string; name: string; image_url: string | null; emoji: string | null; is_active: boolean }
+interface FoodItem { id: string; category_id: string; name: string; image_url: string | null; emoji: string | null; is_active: boolean; weekly_limit: number | null }
+
+// Start of week (Sunday) as YYYY-MM-DD for a given YYYY-MM-DD date
+function weekStart(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - dt.getUTCDay());
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
 
 function KidsView() {
   const { user } = useAuth();
@@ -45,6 +56,8 @@ function KidsView() {
   const [parentPick, setParentPick] = useState(false);
   const [parentPickDialogOpen, setParentPickDialogOpen] = useState(false);
   const [today, setToday] = useState<string>(todayInIsrael(12));
+  // itemId -> times selected this week (Sun–Sat), for the active child
+  const [weeklyCounts, setWeeklyCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     (async () => {
@@ -55,13 +68,15 @@ function KidsView() {
       const resetHour = await getResetHour(id);
       const t = todayInIsrael(resetHour);
       setToday(t);
-      const [{ data: kids }, { data: c }, { data: f }, { data: sels }, { data: fic }, { data: ppicks }] = await Promise.all([
+      const wStart = weekStart(t);
+      const [{ data: kids }, { data: c }, { data: f }, { data: sels }, { data: fic }, { data: ppicks }, { data: weekSels }] = await Promise.all([
         supabase.from("children").select("*").eq("household_id", id).order("created_at"),
         supabase.from("categories").select("*").eq("household_id", id).order("sort_order"),
         supabase.from("food_items").select("*").eq("household_id", id).eq("is_active", true),
         supabase.from("selections").select("*").eq("household_id", id).eq("selection_date", t),
         supabase.from("food_item_categories").select("food_item_id, category_id").eq("household_id", id),
         supabase.from("parent_picks").select("child_id").eq("household_id", id).eq("selection_date", t),
+        supabase.from("selections").select("child_id, food_item_id").eq("household_id", id).gte("selection_date", wStart).lte("selection_date", t),
       ]);
 
       // If this user is a child themselves, restrict to that child only
@@ -95,10 +110,17 @@ function KidsView() {
         const isParentPick = (ppicks ?? []).some((p) => p.child_id === target!.id);
         setParentPick(isParentPick);
         if (my.length > 0 || isParentPick) setDone(true);
+        const counts: Record<string, number> = {};
+        for (const s of weekSels ?? []) {
+          if (s.child_id !== target!.id) continue;
+          counts[s.food_item_id] = (counts[s.food_item_id] ?? 0) + 1;
+        }
+        setWeeklyCounts(counts);
       } else {
         setSelectedIds([]);
         setParentPick(false);
         setDone(false);
+        setWeeklyCounts({});
       }
     })();
   }, [user, search.child]);
@@ -129,6 +151,12 @@ function KidsView() {
         toast.error(`כבר בחרתם את המקסימום בקטגוריה "${c.name}"`);
         return;
       }
+    }
+    // Check the weekly limit of this item
+    const item = items.find((i) => i.id === itemId);
+    if (item?.weekly_limit != null && (weeklyCounts[itemId] ?? 0) >= item.weekly_limit) {
+      toast.error(`אפשר לבחור את "${item.name}" רק ${item.weekly_limit} פעמים בשבוע`);
+      return;
     }
     setSelectedIds([...selectedIds, itemId]);
     void cat;
@@ -287,10 +315,11 @@ function KidsView() {
               const otherCats = (itemCats[it.id] ?? []).filter((cid) => cid !== activeCat);
               // Disabled if not selected AND any of its categories has reached max
               const itemCatIds = itemCats[it.id] ?? [it.category_id];
-              const isDisabled = !isSel && itemCatIds.some((cid) => {
+              const weeklyReached = it.weekly_limit != null && (weeklyCounts[it.id] ?? 0) >= it.weekly_limit;
+              const isDisabled = !isSel && (weeklyReached || itemCatIds.some((cid) => {
                 const c = cats.find((x) => x.id === cid);
                 return c ? countForCat(cid) >= c.max_selections : false;
-              });
+              }));
               return (
                 <button
                   key={it.id}
@@ -317,6 +346,9 @@ function KidsView() {
                       <p className="text-[10px] text-muted-foreground text-center truncate">
                         גם ב: {otherCats.map((cid) => cats.find((c) => c.id === cid)?.emoji).filter(Boolean).join(" ")}
                       </p>
+                    )}
+                    {weeklyReached && !isSel && (
+                      <p className="text-[10px] text-destructive font-bold text-center truncate">נגמר להשבוע</p>
                     )}
                   </div>
                   {isSel && (

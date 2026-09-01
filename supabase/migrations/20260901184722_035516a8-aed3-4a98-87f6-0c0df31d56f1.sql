@@ -1,0 +1,1 @@
+ALTER TABLE public.food_items ADD COLUMN weekly_limit integer;

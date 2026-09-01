@@ -142,6 +142,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          weekly_limit: number | null
         }
         Insert: {
           category_id: string
@@ -152,6 +153,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          weekly_limit?: number | null
         }
         Update: {
           category_id?: string
@@ -162,6 +164,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          weekly_limit?: number | null
         }
         Relationships: [
           {
