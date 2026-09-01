@@ -347,6 +347,9 @@ function KidsView() {
                         גם ב: {otherCats.map((cid) => cats.find((c) => c.id === cid)?.emoji).filter(Boolean).join(" ")}
                       </p>
                     )}
+                    {weeklyReached && !isSel && (
+                      <p className="text-[10px] text-destructive font-bold text-center truncate">נגמר להשבוע</p>
+                    )}
                   </div>
                   {isSel && (
                     <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-9 h-9 flex items-center justify-center shadow-pop animate-pop-in">
