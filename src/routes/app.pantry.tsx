@@ -16,7 +16,7 @@ export const Route = createFileRoute("/app/pantry")({
 });
 
 interface Category { id: string; name: string; emoji: string; color: string; max_selections: number; sort_order: number }
-interface FoodItem { id: string; category_id: string; name: string; image_url: string | null; emoji: string | null; is_active: boolean }
+interface FoodItem { id: string; category_id: string; name: string; image_url: string | null; emoji: string | null; is_active: boolean; weekly_limit: number | null }
 
 const FOOD_EMOJIS = ["🍎","🍌","🍇","🍓","🥕","🥒","🍅","🥑","🥪","🥯","🍞","🧀","🥚","🍪","🍫","🍿","🍇","🥨","🧃","🥛","🍵","🍊","🍑","🍒","🌽","🥦","🍠","🥜"];
 
@@ -37,6 +37,7 @@ function Pantry() {
   const [itemEmoji, setItemEmoji] = useState("🍎");
   const [itemImage, setItemImage] = useState<string | null>(null);
   const [itemSelectedCats, setItemSelectedCats] = useState<string[]>([]);
+  const [itemWeeklyLimit, setItemWeeklyLimit] = useState<string>("");
   const [uploading, setUploading] = useState(false);
 
   const load = async () => {
@@ -104,11 +105,13 @@ function Pantry() {
     setItemDialog({ open: true, categoryId, editing: null });
     setItemName(""); setItemEmoji("🍎"); setItemImage(null);
     setItemSelectedCats([categoryId]);
+    setItemWeeklyLimit("");
   };
   const openEditItem = (it: FoodItem) => {
     setItemDialog({ open: true, categoryId: it.category_id, editing: it });
     setItemName(it.name); setItemEmoji(it.emoji ?? "🍎"); setItemImage(it.image_url);
     setItemSelectedCats(itemCats[it.id] ?? [it.category_id]);
+    setItemWeeklyLimit(it.weekly_limit != null ? String(it.weekly_limit) : "");
   };
 
   const toggleItemCat = (cid: string) => {
@@ -139,16 +142,17 @@ function Pantry() {
       return;
     }
     const primaryCat = itemSelectedCats[0];
+    const weeklyLimit = itemWeeklyLimit.trim() === "" ? null : Math.max(1, parseInt(itemWeeklyLimit, 10) || 1);
     let itemId: string;
     if (itemDialog.editing) {
       itemId = itemDialog.editing.id;
       await supabase.from("food_items")
-        .update({ name: itemName.trim(), emoji: itemEmoji, image_url: itemImage, category_id: primaryCat })
+        .update({ name: itemName.trim(), emoji: itemEmoji, image_url: itemImage, category_id: primaryCat, weekly_limit: weeklyLimit })
         .eq("id", itemId);
     } else {
       const { data, error } = await supabase.from("food_items").insert({
         household_id: hid, category_id: primaryCat,
-        name: itemName.trim(), emoji: itemEmoji, image_url: itemImage,
+        name: itemName.trim(), emoji: itemEmoji, image_url: itemImage, weekly_limit: weeklyLimit,
       }).select("id").single();
       if (error || !data) { toast.error(error?.message ?? "שגיאה בשמירה"); return; }
       itemId = data.id;
