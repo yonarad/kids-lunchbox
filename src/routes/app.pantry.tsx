@@ -16,7 +16,9 @@ export const Route = createFileRoute("/app/pantry")({
 });
 
 interface Category { id: string; name: string; emoji: string; color: string; max_selections: number; sort_order: number }
-interface FoodItem { id: string; category_id: string; name: string; image_url: string | null; emoji: string | null; is_active: boolean; weekly_limit: number | null }
+const DAY_NAMES = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+interface FoodItem { id: string; category_id: string; name: string; image_url: string | null; emoji: string | null; is_active: boolean; weekly_limit: number | null; allowed_days: number[] | null }
 
 const FOOD_EMOJIS = ["🍎","🍌","🍇","🍓","🥕","🥒","🍅","🥑","🥪","🥯","🍞","🧀","🥚","🍪","🍫","🍿","🍇","🥨","🧃","🥛","🍵","🍊","🍑","🍒","🌽","🥦","🍠","🥜"];
 
@@ -38,6 +40,7 @@ function Pantry() {
   const [itemImage, setItemImage] = useState<string | null>(null);
   const [itemSelectedCats, setItemSelectedCats] = useState<string[]>([]);
   const [itemWeeklyLimit, setItemWeeklyLimit] = useState<string>("");
+  const [itemDays, setItemDays] = useState<number[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const load = async () => {
@@ -106,12 +109,14 @@ function Pantry() {
     setItemName(""); setItemEmoji("🍎"); setItemImage(null);
     setItemSelectedCats([categoryId]);
     setItemWeeklyLimit("");
+    setItemDays([]);
   };
   const openEditItem = (it: FoodItem) => {
     setItemDialog({ open: true, categoryId: it.category_id, editing: it });
     setItemName(it.name); setItemEmoji(it.emoji ?? "🍎"); setItemImage(it.image_url);
     setItemSelectedCats(itemCats[it.id] ?? [it.category_id]);
     setItemWeeklyLimit(it.weekly_limit != null ? String(it.weekly_limit) : "");
+    setItemDays(it.allowed_days ?? []);
   };
 
   const toggleItemCat = (cid: string) => {
@@ -142,17 +147,18 @@ function Pantry() {
       return;
     }
     const primaryCat = itemSelectedCats[0];
+    const allowedDays = itemDays.length === 0 || itemDays.length === 7 ? null : [...itemDays].sort((a, b) => a - b);
     const weeklyLimit = itemWeeklyLimit.trim() === "" ? null : Math.max(1, parseInt(itemWeeklyLimit, 10) || 1);
     let itemId: string;
     if (itemDialog.editing) {
       itemId = itemDialog.editing.id;
       await supabase.from("food_items")
-        .update({ name: itemName.trim(), emoji: itemEmoji, image_url: itemImage, category_id: primaryCat, weekly_limit: weeklyLimit })
+        .update({ name: itemName.trim(), emoji: itemEmoji, image_url: itemImage, category_id: primaryCat, weekly_limit: weeklyLimit, allowed_days: allowedDays })
         .eq("id", itemId);
     } else {
       const { data, error } = await supabase.from("food_items").insert({
         household_id: hid, category_id: primaryCat,
-        name: itemName.trim(), emoji: itemEmoji, image_url: itemImage, weekly_limit: weeklyLimit,
+        name: itemName.trim(), emoji: itemEmoji, image_url: itemImage, weekly_limit: weeklyLimit, allowed_days: allowedDays,
       }).select("id").single();
       if (error || !data) { toast.error(error?.message ?? "שגיאה בשמירה"); return; }
       itemId = data.id;
@@ -231,6 +237,11 @@ function Pantry() {
                         )}
                         {it.weekly_limit != null && (
                           <p className="text-[10px] text-primary text-center truncate mt-0.5">עד {it.weekly_limit} בשבוע</p>
+                        )}
+                        {it.allowed_days && it.allowed_days.length > 0 && it.allowed_days.length < 7 && (
+                          <p className="text-[10px] text-muted-foreground text-center truncate mt-0.5">
+                            רק בימים: {it.allowed_days.map((d) => DAY_NAMES[d]).join(", ")}
+                          </p>
                         )}
                         <div className="flex items-center justify-between mt-2 gap-2">
                           <Switch checked={it.is_active} onCheckedChange={() => toggleActive(it)} className="shrink-0" />
@@ -313,6 +324,24 @@ function Pantry() {
                 value={itemWeeklyLimit}
                 onChange={(e) => setItemWeeklyLimit(e.target.value)}
               />
+            </div>
+            <div>
+              <label className="text-sm font-medium block mb-2">ימים מותרים (אם לא נבחר כלום — בכל הימים)</label>
+              <div className="flex flex-wrap gap-2">
+                {DAY_NAMES.map((name, d) => {
+                  const on = itemDays.includes(d);
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setItemDays((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d])}
+                      className={`px-3 py-2 rounded-xl text-sm transition-all ${on ? "bg-primary text-primary-foreground ring-2 ring-primary shadow-pop" : "bg-secondary"}`}
+                    >
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium block mb-2">תמונה (אופציונלי)</label>

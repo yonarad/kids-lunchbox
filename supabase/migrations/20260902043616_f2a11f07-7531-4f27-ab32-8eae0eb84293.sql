@@ -1,0 +1,1 @@
+ALTER TABLE public.food_items ADD COLUMN allowed_days smallint[];

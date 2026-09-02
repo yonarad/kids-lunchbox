@@ -134,6 +134,7 @@ export type Database = {
       }
       food_items: {
         Row: {
+          allowed_days: number[] | null
           category_id: string
           created_at: string
           emoji: string | null
@@ -145,6 +146,7 @@ export type Database = {
           weekly_limit: number | null
         }
         Insert: {
+          allowed_days?: number[] | null
           category_id: string
           created_at?: string
           emoji?: string | null
@@ -156,6 +158,7 @@ export type Database = {
           weekly_limit?: number | null
         }
         Update: {
+          allowed_days?: number[] | null
           category_id?: string
           created_at?: string
           emoji?: string | null
