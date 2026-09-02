@@ -25,7 +25,12 @@ export const Route = createFileRoute("/app/kids")({
 
 interface Child { id: string; name: string; avatar_color: string; avatar_emoji: string }
 interface Category { id: string; name: string; emoji: string; color: string; max_selections: number; sort_order: number }
-interface FoodItem { id: string; category_id: string; name: string; image_url: string | null; emoji: string | null; is_active: boolean; weekly_limit: number | null }
+interface FoodItem { id: string; category_id: string; name: string; image_url: string | null; emoji: string | null; is_active: boolean; weekly_limit: number | null; allowed_days: number[] | null }
+
+function dayOfWeek(dateStr: string): number {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
 
 // Start of week (Sunday) as YYYY-MM-DD for a given YYYY-MM-DD date
 function weekStart(dateStr: string): string {
@@ -126,9 +131,14 @@ function KidsView() {
   }, [user, search.child]);
 
   // Items visible in a category = any item linked to that category
+  const todayDow = dayOfWeek(today);
+  const availableItems = useMemo(
+    () => items.filter((i) => !i.allowed_days || i.allowed_days.length === 0 || i.allowed_days.includes(todayDow)),
+    [items, todayDow]
+  );
   const itemsForCat = useMemo(
-    () => (catId: string) => items.filter((i) => (itemCats[i.id] ?? [i.category_id]).includes(catId)),
-    [items, itemCats]
+    () => (catId: string) => availableItems.filter((i) => (itemCats[i.id] ?? [i.category_id]).includes(catId)),
+    [availableItems, itemCats]
   );
 
   // Count selections in a category (any selected item linked to it)
