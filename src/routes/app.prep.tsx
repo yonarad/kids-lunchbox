@@ -99,6 +99,26 @@ function PrepList() {
     persist(next);
   };
 
+  const removeItem = async (row: Row, item: PrepItem) => {
+    if (!householdId) return;
+    const { error } = await supabase
+      .from("selections")
+      .delete()
+      .eq("household_id", householdId)
+      .eq("child_id", row.child_id)
+      .eq("food_item_id", item.id)
+      .eq("selection_date", today);
+    if (error) return;
+    const next = new Set(done);
+    next.delete(itemKey(row.child_id, item.id));
+    persist(next);
+    setRows((prev) =>
+      prev
+        .map((r) => (r.child_id === row.child_id ? { ...r, items: r.items.filter((i) => i.id !== item.id) } : r))
+        .filter((r) => r.parent_pick || r.items.length > 0)
+    );
+  };
+
   const setAllForChild = (row: Row, value: boolean) => {
     const next = new Set(done);
     const keys = row.parent_pick && row.items.length === 0
