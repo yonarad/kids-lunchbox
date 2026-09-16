@@ -6,7 +6,8 @@ import { getMyHouseholdId, todayInIsrael, getResetHour, formatHebrewDate } from 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Printer, RefreshCw, CheckCheck, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Printer, RefreshCw, CheckCheck, RotateCcw, ChevronDown, ChevronUp, X } from "lucide-react";
 
 export const Route = createFileRoute("/app/prep")({
   component: PrepList,
@@ -96,6 +97,26 @@ function PrepList() {
     if (next.has(key)) next.delete(key);
     else next.add(key);
     persist(next);
+  };
+
+  const removeItem = async (row: Row, item: PrepItem) => {
+    if (!householdId) return;
+    const { error } = await supabase
+      .from("selections")
+      .delete()
+      .eq("household_id", householdId)
+      .eq("child_id", row.child_id)
+      .eq("food_item_id", item.id)
+      .eq("selection_date", today);
+    if (error) return;
+    const next = new Set(done);
+    next.delete(itemKey(row.child_id, item.id));
+    persist(next);
+    setRows((prev) =>
+      prev
+        .map((r) => (r.child_id === row.child_id ? { ...r, items: r.items.filter((i) => i.id !== item.id) } : r))
+        .filter((r) => r.parent_pick || r.items.length > 0)
+    );
   };
 
   const setAllForChild = (row: Row, value: boolean) => {
@@ -305,8 +326,8 @@ function PrepList() {
                       {r.items.map((it) => {
                         const checked = done.has(itemKey(r.child_id, it.id));
                         return (
-                          <li key={it.id}>
-                            <label className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-secondary/50 ${checked ? "opacity-60" : ""}`}>
+                          <li key={it.id} className="flex items-center gap-1">
+                            <label className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-secondary/50 flex-1 min-w-0 ${checked ? "opacity-60" : ""}`}>
                               <Checkbox
                                 checked={checked}
                                 onCheckedChange={() => toggleItem(r.child_id, it.id)}
@@ -317,11 +338,35 @@ function PrepList() {
                           ) : (
                             <span className="text-2xl">{it.emoji ?? it.category_emoji}</span>
                           )}
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <p className={`font-medium ${checked ? "line-through" : ""}`}>{it.name}</p>
                             <p className="text-xs text-muted-foreground">{it.category}</p>
                           </div>
                         </label>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="print:hidden shrink-0 text-muted-foreground hover:text-destructive"
+                              aria-label={`הסר את ${it.name}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>להסיר את הפריט?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                הפריט "{it.name}" יוסר מהקופסה של {r.child_name} להיום בלבד. הוא יישאר זמין במזווה לבחירה מחדש.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>ביטול</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => removeItem(r, it)}>כן, להסיר</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </li>
                     );
                   })}
