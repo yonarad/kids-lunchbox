@@ -326,8 +326,8 @@ function PrepList() {
                       {r.items.map((it) => {
                         const checked = done.has(itemKey(r.child_id, it.id));
                         return (
-                          <li key={it.id}>
-                            <label className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-secondary/50 ${checked ? "opacity-60" : ""}`}>
+                          <li key={it.id} className="flex items-center gap-1">
+                            <label className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-secondary/50 flex-1 min-w-0 ${checked ? "opacity-60" : ""}`}>
                               <Checkbox
                                 checked={checked}
                                 onCheckedChange={() => toggleItem(r.child_id, it.id)}
@@ -338,11 +338,35 @@ function PrepList() {
                           ) : (
                             <span className="text-2xl">{it.emoji ?? it.category_emoji}</span>
                           )}
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <p className={`font-medium ${checked ? "line-through" : ""}`}>{it.name}</p>
                             <p className="text-xs text-muted-foreground">{it.category}</p>
                           </div>
                         </label>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="print:hidden shrink-0 text-muted-foreground hover:text-destructive"
+                              aria-label={`הסר את ${it.name}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>להסיר את הפריט?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                הפריט "{it.name}" יוסר מהקופסה של {r.child_name} להיום בלבד. הוא יישאר זמין במזווה לבחירה מחדש.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>ביטול</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => removeItem(r, it)}>כן, להסיר</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </li>
                     );
                   })}
