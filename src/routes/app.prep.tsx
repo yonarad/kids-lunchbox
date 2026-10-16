@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Printer, RefreshCw, CheckCheck, RotateCcw, ChevronDown, ChevronUp, X } from "lucide-react";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/app/prep")({
+  head: () => pageHead("רשימת הכנה", "רשימת האוכל שנבחר לקופסאות הילדים וסימון הפריטים שכבר הוכנו."),
   component: PrepList,
 });
 

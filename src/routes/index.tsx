@@ -4,8 +4,10 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/")({
+  head: () => pageHead("התחברות", "הילדים בוחרים אוכל לקופסה וההורים מקבלים רשימת הכנה מסודרת."),
   component: Landing,
 });
 

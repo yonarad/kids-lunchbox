@@ -4,8 +4,10 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyHouseholdId, formatHebrewDate } from "@/lib/household";
 import { Card } from "@/components/ui/card";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/app/history")({
+  head: () => pageHead("היסטוריית בחירות", "צפייה בבחירות האוכל של הילדים מהחודש האחרון."),
   component: History,
 });
 

@@ -9,8 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/app/settings")({
+  head: () => pageHead("הגדרות", "התאמת תזכורות ושעת האיפוס היומית לקופסאות האוכל של המשפחה."),
   component: SettingsPage,
 });
 

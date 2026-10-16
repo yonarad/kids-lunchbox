@@ -9,8 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Trash2, Pencil, Mail, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/app/")({
+  head: () => pageHead("הקופסאות של המשפחה", "ניהול הילדים ומעקב אחר בחירות האוכל היומיות של המשפחה."),
   component: Dashboard,
 });
 

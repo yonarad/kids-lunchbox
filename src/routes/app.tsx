@@ -137,9 +137,11 @@ function AppLayout() {
   if (kidMode && onKidRoute) {
     return (
       <div className="min-h-screen bg-gradient-hero">
-        <div className="fixed top-3 left-3 z-50 bg-card/90 backdrop-blur rounded-full px-4 py-2 shadow-card flex items-center gap-2">
+        <div className="flex justify-end px-3 pt-3">
+        <div className="bg-card/90 backdrop-blur rounded-full px-4 py-2 shadow-card flex items-center gap-2">
           <Label htmlFor="kid-mode" className="text-xs font-bold cursor-pointer">מצב הורה</Label>
           <Switch id="kid-mode" checked={kidMode} onCheckedChange={toggleKid} />
+        </div>
         </div>
         <Outlet />
       </div>
@@ -187,7 +189,7 @@ function AppLayout() {
           })}
         </nav>
       </header>
-      <main className="flex-1 container mx-auto px-4 py-6">
+      <main className={`flex-1 ${onKidRoute ? "" : "container mx-auto px-4 py-6"}`}>
         <Outlet />
       </main>
     </div>

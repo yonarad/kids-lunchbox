@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Pencil, Image as ImageIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/app/pantry")({
+  head: () => pageHead("המזווה שלי", "ניהול מאכלים, תמונות, קטגוריות ומגבלות הבחירה של הילדים."),
   component: Pantry,
 });
 
