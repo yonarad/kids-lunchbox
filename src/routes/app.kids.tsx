@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Sparkles, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/app/kids")({
+  head: () => pageHead("בחירת הקופסה", "בחירת מאכלים לפי קטגוריות לקופסת האוכל האישית של כל ילד."),
   validateSearch: (s: Record<string, unknown>) => ({ child: (s.child as string) || "" }),
   component: KidsView,
 });

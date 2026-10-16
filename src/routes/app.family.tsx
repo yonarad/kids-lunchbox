@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Trash2, Crown } from "lucide-react";
 import { toast } from "sonner";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/app/family")({
+  head: () => pageHead("המשפחה שלי", "ניהול בני המשפחה ושיתוף בחירות האוכל עם ההורים."),
   component: Family,
 });
 
