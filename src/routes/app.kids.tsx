@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyHouseholdId, todayInIsrael, getResetHour } from "@/lib/household";
 import { Button } from "@/components/ui/button";
+import { CategoryStrip } from "@/components/CategoryStrip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -266,21 +267,24 @@ function KidsView() {
   const totalSelected = selectedIds.length;
 
   return (
-    <div className="min-h-screen p-4 md:p-6 pt-16">
+    <div className="min-h-screen p-4 md:p-6">
       {/* Header with child */}
-      <div className="max-w-5xl mx-auto mb-4 flex items-center gap-3 bg-card/80 backdrop-blur rounded-3xl p-3 shadow-card">
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-soft" style={{ backgroundColor: child.avatar_color }}>
+      <div className="max-w-5xl mx-auto mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-card/80 backdrop-blur rounded-3xl p-3 shadow-card">
+        <div className="flex min-w-0 items-center gap-3">
+        <div className="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center text-3xl shadow-soft" style={{ backgroundColor: child.avatar_color }}>
           {child.avatar_emoji}
         </div>
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">בוחרים עבור</p>
-          <h1 className="text-xl font-bold">{child.name}</h1>
+          <h1 className="text-xl font-bold truncate">{child.name}</h1>
+        </div>
         </div>
         {children.length > 1 && (
           <select
             value={child.id}
             onChange={(e) => navigate({ to: "/app/kids", search: { child: e.target.value } })}
-            className="rounded-xl border bg-background px-3 py-2 text-sm"
+            aria-label="בחירת ילד"
+            className="max-w-32 rounded-xl border bg-background px-3 py-2 text-sm"
           >
             {children.map((c) => <option key={c.id} value={c.id}>{c.avatar_emoji} {c.name}</option>)}
           </select>
@@ -288,23 +292,7 @@ function KidsView() {
       </div>
 
       {/* Category tabs */}
-      <div className="max-w-5xl mx-auto mb-4 flex gap-2 overflow-x-auto pb-2">
-        {cats.map((c) => {
-          const count = countForCat(c.id);
-          const isActive = c.id === activeCat;
-          return (
-            <button
-              key={c.id}
-              onClick={() => setActiveCat(c.id)}
-              className={`flex-shrink-0 rounded-2xl px-4 py-3 transition-all ${isActive ? "bg-primary text-primary-foreground shadow-pop scale-105" : "bg-card shadow-card"}`}
-            >
-              <div className="text-3xl">{c.emoji}</div>
-              <div className="text-sm font-bold">{c.name}</div>
-              <div className="text-xs opacity-80">{count}/{c.max_selections}</div>
-            </button>
-          );
-        })}
-      </div>
+      <CategoryStrip categories={cats} activeId={activeCat} countForCategory={countForCat} onSelect={setActiveCat} />
 
       {/* Items grid */}
       <div className="max-w-5xl mx-auto">
