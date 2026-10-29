@@ -55,6 +55,39 @@ export type Database = {
           },
         ]
       }
+      child_weekly_schedules: {
+        Row: {
+          child_id: string
+          enabled: boolean
+          household_id: string
+        }
+        Insert: {
+          child_id: string
+          enabled?: boolean
+          household_id: string
+        }
+        Update: {
+          child_id?: string
+          enabled?: boolean
+          household_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_weekly_schedules_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: true
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_weekly_schedules_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       children: {
         Row: {
           avatar_color: string
@@ -386,11 +419,94 @@ export type Database = {
           },
         ]
       }
+      weekly_schedule_applications: {
+        Row: {
+          child_id: string
+          household_id: string
+          selection_date: string
+        }
+        Insert: {
+          child_id: string
+          household_id: string
+          selection_date: string
+        }
+        Update: {
+          child_id?: string
+          household_id?: string
+          selection_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_schedule_applications_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_schedule_applications_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_schedule_items: {
+        Row: {
+          child_id: string
+          food_item_id: string
+          household_id: string
+          sort_order: number
+          weekday: number
+        }
+        Insert: {
+          child_id: string
+          food_item_id: string
+          household_id: string
+          sort_order?: number
+          weekday: number
+        }
+        Update: {
+          child_id?: string
+          food_item_id?: string
+          household_id?: string
+          sort_order?: number
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_schedule_items_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "child_weekly_schedules"
+            referencedColumns: ["child_id"]
+          },
+          {
+            foreignKeyName: "weekly_schedule_items_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_schedule_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      fill_weekly_schedules: {
+        Args: { _household_id?: string }
+        Returns: undefined
+      }
       is_household_child: {
         Args: { _household_id: string; _user_id: string }
         Returns: boolean
@@ -398,6 +514,14 @@ export type Database = {
       is_household_member: {
         Args: { _household_id: string; _user_id: string }
         Returns: boolean
+      }
+      is_household_parent: {
+        Args: { _household_id: string; _user_id: string }
+        Returns: boolean
+      }
+      save_weekly_schedule: {
+        Args: { _child_id: string; _enabled: boolean; _items: Json }
+        Returns: undefined
       }
     }
     Enums: {
