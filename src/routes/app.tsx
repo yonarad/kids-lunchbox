@@ -6,7 +6,7 @@ import { getMyChildRecord } from "@/lib/household";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { LogOut, Home, Package, ChefHat, History, Users, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, Home, Package, ChefHat, History, Users, CalendarDays, Settings as SettingsIcon } from "lucide-react";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/app")({
 const PARENT_NAV = [
   { to: "/app", label: "בית", icon: Home, exact: true },
   { to: "/app/pantry", label: "המזווה", icon: Package },
+  { to: "/app/schedule", label: "מערכת שבועית", icon: CalendarDays },
   { to: "/app/prep", label: "רשימת הכנה", icon: ChefHat },
   { to: "/app/history", label: "היסטוריה", icon: History },
   { to: "/app/family", label: "משפחה", icon: Users },

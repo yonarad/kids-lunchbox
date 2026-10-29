@@ -17,6 +17,7 @@ import { Route as AppHistoryRouteImport } from './routes/app.history'
 import { Route as AppKidsRouteImport } from './routes/app.kids'
 import { Route as AppPantryRouteImport } from './routes/app.pantry'
 import { Route as AppPrepRouteImport } from './routes/app.prep'
+import { Route as AppScheduleRouteImport } from './routes/app.schedule'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +60,11 @@ const AppPrepRoute = AppPrepRouteImport.update({
   path: '/prep',
   getParentRoute: () => AppRoute,
 } as any)
+const AppScheduleRoute = AppScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/app/kids': typeof AppKidsRoute
   '/app/pantry': typeof AppPantryRoute
   '/app/prep': typeof AppPrepRoute
+  '/app/schedule': typeof AppScheduleRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
 }
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/app/kids': typeof AppKidsRoute
   '/app/pantry': typeof AppPantryRoute
   '/app/prep': typeof AppPrepRoute
+  '/app/schedule': typeof AppScheduleRoute
   '/app/settings': typeof AppSettingsRoute
   '/app': typeof AppIndexRoute
 }
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/app/kids': typeof AppKidsRoute
   '/app/pantry': typeof AppPantryRoute
   '/app/prep': typeof AppPrepRoute
+  '/app/schedule': typeof AppScheduleRoute
   '/app/settings': typeof AppSettingsRoute
   '/app/': typeof AppIndexRoute
 }
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/app/kids'
     | '/app/pantry'
     | '/app/prep'
+    | '/app/schedule'
     | '/app/settings'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/app/kids'
     | '/app/pantry'
     | '/app/prep'
+    | '/app/schedule'
     | '/app/settings'
     | '/app'
   id:
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/app/kids'
     | '/app/pantry'
     | '/app/prep'
+    | '/app/schedule'
     | '/app/settings'
     | '/app/'
   fileRoutesById: FileRoutesById
@@ -196,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPrepRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/schedule': {
+      id: '/app/schedule'
+      path: '/schedule'
+      fullPath: '/app/schedule'
+      preLoaderRoute: typeof AppScheduleRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/settings': {
       id: '/app/settings'
       path: '/settings'
@@ -212,6 +231,7 @@ interface AppRouteChildren {
   AppKidsRoute: typeof AppKidsRoute
   AppPantryRoute: typeof AppPantryRoute
   AppPrepRoute: typeof AppPrepRoute
+  AppScheduleRoute: typeof AppScheduleRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -222,6 +242,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppKidsRoute: AppKidsRoute,
   AppPantryRoute: AppPantryRoute,
   AppPrepRoute: AppPrepRoute,
+  AppScheduleRoute: AppScheduleRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
 }

@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1793249725144,
+      "tag": "0000_optional_weekly_lunch_schedules",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793249756029,
+      "tag": "0001_enable_weekly_schedule_clock",
+      "breakpoints": true
+    }
+  ]
+}

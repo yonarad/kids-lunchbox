@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fillWeeklySchedules } from "@/lib/weekly-schedule";
 
 export async function getMyHouseholdId(userId: string): Promise<string | null> {
   // Prefer a household the user was invited to (shared with them)
@@ -80,6 +81,8 @@ export function formatHebrewDate(dateStr: string): string {
 }
 
 export async function getResetHour(householdId: string): Promise<number> {
+  // Materialize the current schedule before any daily view reads selections.
+  await fillWeeklySchedules(householdId);
   const { data } = await supabase
     .from("household_settings")
     .select("reset_hour")
