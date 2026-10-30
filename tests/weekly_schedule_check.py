@@ -21,7 +21,7 @@ SETUP = """async () => {
   const settings = check(await db.from('household_settings').select('reset_hour').eq('household_id',h).maybeSingle());
   const date = todayInIsrael(settings?.reset_hour ?? 12);
   const dow = new Date(date+'T00:00:00Z').getUTCDay();
-  const baseline = check(await db.from('selections').select('child_id,food_item_id,selection_date').eq('household_id',h).order('id'));
+  const baseline = check(await db.from('selections').select('child_id,food_item_id,selection_date').eq('household_id',h).eq('selection_date',date).order('id'));
   window.weeklyTest = {db,h,date,dow,check,baseline,children:[],foods:[],categories:[]};
   const t = window.weeklyTest;
   t.children = check(await db.from('children').insert([
@@ -95,7 +95,7 @@ DB_CHECKS = """async () => {
   const anon=createClient(db.supabaseUrl,db.supabaseKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
   assert('Anonymous schedule save is denied',!!(await anon.rpc('save_weekly_schedule',{_child_id:c[0].id,_enabled:true,_items:items})).error);
   assert('Anonymous schedule read reveals no rows',(await anon.from('child_weekly_schedules').select('*')).data?.length===0 || !!(await anon.from('child_weekly_schedules').select('*')).error);
-  const originals=check(await db.from('selections').select('child_id,food_item_id,selection_date').eq('household_id',h).order('id')).filter(r=>!c.some(child=>child.id===r.child_id));
+  const originals=check(await db.from('selections').select('child_id,food_item_id,selection_date').eq('household_id',h).eq('selection_date',date).order('id')).filter(r=>!c.some(child=>child.id===r.child_id));
   const normalize=rows=>rows.map(r=>[r.child_id,r.food_item_id,r.selection_date].join(':')).sort().join('|');
   assert('Existing children selections remain unchanged',normalize(originals)===normalize(t.baseline));
   return passed;
