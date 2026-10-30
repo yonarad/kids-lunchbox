@@ -35,7 +35,7 @@ SETUP = """async () => {
     {household_id:h,name:'בדיקת מערכת',max_selections:1},
     {household_id:h,name:'בדיקת מגבלות',max_selections:20}
   ]).select());
-  const food = (name, cat, more={}) => ({household_id:h,category_id:cat,name,...more});
+  const food = (name, cat, more={}) => ({household_id:h,category_id:cat,name,is_active:true,allowed_days:null,weekly_limit:null,...more});
   t.foods = check(await db.from('food_items').insert([
     food('פריט בדיקה שבועית',t.categories[0].id),
     food('פריט נוסף לבדיקה',t.categories[0].id),
