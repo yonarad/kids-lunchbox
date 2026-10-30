@@ -96,7 +96,8 @@ DB_CHECKS = """async () => {
   assert('Anonymous schedule save is denied',!!(await anon.rpc('save_weekly_schedule',{_child_id:c[0].id,_enabled:true,_items:items})).error);
   assert('Anonymous schedule read reveals no rows',(await anon.from('child_weekly_schedules').select('*')).data?.length===0 || !!(await anon.from('child_weekly_schedules').select('*')).error);
   const originals=check(await db.from('selections').select('child_id,food_item_id,selection_date').eq('household_id',h).order('id')).filter(r=>!c.some(child=>child.id===r.child_id));
-  assert('Existing children selections remain unchanged',JSON.stringify(originals)===JSON.stringify(t.baseline));
+  const normalize=rows=>rows.map(r=>[r.child_id,r.food_item_id,r.selection_date].join(':')).sort().join('|');
+  assert('Existing children selections remain unchanged',normalize(originals)===normalize(t.baseline));
   return passed;
 }"""
 
