@@ -111,8 +111,12 @@ function WeeklySchedule() {
       setSavedItems((prev) => [...prev.filter((c) => c.child_id !== childId), ...items.map((item, sort_order) => ({ ...item, child_id: childId, household_id: child.household_id, sort_order }))]);
       setDirty(false);
       toast.success("המערכת השבועית נשמרה");
-      await fillWeeklySchedules(child.household_id);
-    } catch { toast.error("לא ניתן לשמור או למלא את המערכת. נסו שוב."); }
+      try {
+        await fillWeeklySchedules(child.household_id);
+      } catch {
+        toast.error("המערכת נשמרה, אך המילוי האוטומטי לא הושלם. נסו לפתוח שוב את רשימת ההכנה.");
+      }
+    } catch { toast.error("לא ניתן לשמור את המערכת. נסו שוב."); }
     finally { setSaving(false); }
   };
 
@@ -129,19 +133,19 @@ function WeeklySchedule() {
       <div className="flex flex-wrap items-center gap-5 border-b pb-5">
         <div className="w-full sm:w-56 space-y-2">
           <Label htmlFor="schedule-child">ילד</Label>
-          <Select dir="rtl" value={childId} onValueChange={(id) => {
+          <Select dir="rtl" value={childId} disabled={saving} onValueChange={(id) => {
             if (dirty && !window.confirm("לעבור לילד אחר בלי לשמור את השינויים?")) return;
             setChildId(id);
           }}><SelectTrigger id="schedule-child"><SelectValue /></SelectTrigger><SelectContent>{children.map((c) => <SelectItem key={c.id} value={c.id}>{c.avatar_emoji} {c.name}</SelectItem>)}</SelectContent></Select>
         </div>
         <div className="flex items-center gap-3">
-          <Switch id="schedule-enabled" checked={enabled} onCheckedChange={(v) => { setEnabled(v); setDirty(true); }} />
+          <Switch id="schedule-enabled" disabled={saving} checked={enabled} onCheckedChange={(v) => { setEnabled(v); setDirty(true); }} />
           <Label htmlFor="schedule-enabled">מילוי אוטומטי עבור {child?.name}</Label>
         </div>
         <span className="text-sm text-muted-foreground">{enabled ? "מערכת קבועה" : "בחירה חופשית"}</span>
       </div>
       <div className="grid grid-cols-4 sm:grid-cols-7 gap-2" role="tablist" aria-label="ימי השבוע">
-        {DAYS.map((name, index) => <Button role="tab" aria-selected={day === index} key={name} variant={day === index ? "default" : "secondary"} className="h-auto min-h-14 flex-col gap-1 py-2" onClick={() => setDay(index)}>
+        {DAYS.map((name, index) => <Button role="tab" aria-selected={day === index} disabled={saving} key={name} variant={day === index ? "default" : "secondary"} className="h-auto min-h-14 flex-col gap-1 py-2" onClick={() => setDay(index)}>
           <span>{name}</span><span className="text-xs">{(week[index] ?? []).length} פריטים</span>
         </Button>)}
       </div>
